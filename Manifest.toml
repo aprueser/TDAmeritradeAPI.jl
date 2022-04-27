@@ -236,6 +236,11 @@ version = "0.5.9"
 deps = ["Base64"]
 uuid = "d6f4376e-aef5-505a-96c1-9c027394607a"
 
+[[deps.MarketLists]]
+path = "/Users/drew/Development/git-projects/MarketLists"
+uuid = "1791e4d3-c481-4fa1-ad32-b71e965e4dfb"
+version = "0.1.0"
+
 [[deps.MatrixFactorizations]]
 deps = ["ArrayLayouts", "LinearAlgebra", "Printf", "Random"]
 git-tree-sha1 = "2212d36f97e01347adb1460a6914e20f2feee853"
