@@ -34,8 +34,9 @@ dfQQQ = TDAmeritradeAPI.api_getPriceHistoryDF("QQQ", keys)
 
 The Price History API additionally provides a "TS", and "TA" get function that return a Temporal.TS and TimeSeries.TimeArray respectivly 
 
-## Ticket Symbol support
+## Ticker Symbol support
 Any API call that uses the symbol as part of the URL will not support FUTURES, FOREX, or INDEX symbols with a / or $ in the symbol.  
+
 Any API call that uses the query string, or the message body can encode the symbol and support FUTURES, FOREX, and INDEX symbols
 
 ## TimeZone Notes
