@@ -12,8 +12,6 @@ struct Mover
     totalVolume::Int64
 end
 
-StructTypes.StructType(::Type{Mover}) = StructTypes.Struct()
-
 ################################################################################
 ##
 ## Define custom HTTP error messages for the API call
@@ -75,7 +73,7 @@ function api_getMoversDF(index::String, direction::String, change::String, apiKe
     if haskey(httpRet, :code) && httpRet[:code] == 200
         ljson = LazyJSON.value(httpRet[:body])
 
-        if length(ljson) > 0 && haskey(ljson, "symbol")
+        if length(ljson) > 0
             df = moversToDataFrame(ljson)
         else
             df = DataFrame([:httpCode => httpRet[:code], :httpMessage => httpRet[:message], :results => "No Movers data found for index: " * index])
