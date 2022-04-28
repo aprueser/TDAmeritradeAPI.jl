@@ -27,9 +27,6 @@ struct Market
     isOpen::Bool
 end
 
-StructTypes.StructType(::Type{SessionHours}) = StructTypes.Struct()
-StructTypes.StructType(::Type{Market}) = StructTypes.Struct()
-
 ################################################################################
 ##
 ## Define custom HTTP error messages for the API call
