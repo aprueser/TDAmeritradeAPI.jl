@@ -78,11 +78,6 @@ struct Instrument
     assetType::String
 end
 
-StructTypes.StructType(::Type{Bond})            = StructTypes.Struct()
-StructTypes.StructType(::Type{FundamentalData}) = StructTypes.Struct()
-StructTypes.StructType(::Type{Fundamental})     = StructTypes.Struct()
-StructTypes.StructType(::Type{Instrument})      = StructTypes.Struct()
-
 ################################################################################
 ##
 ## Define custom HTTP error messages for the API call
