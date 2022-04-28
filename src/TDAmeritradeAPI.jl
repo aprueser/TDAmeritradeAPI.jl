@@ -32,10 +32,9 @@ module TDAmeritradeAPI
 
     ## Dependent Packages
     using ArgCheck, HTTP,
-          LazyArrays, LazyJSON, 
-          StructTypes, StructArrays, 
+          LazyArrays, LazyJSON,  
           Dates, TimeZones,
-          Tables, DataFrames, DataFramesMeta, 
+          DataFrames, DataFramesMeta, 
           TimeSeries, Temporal
 
     mutable struct apiKeys
