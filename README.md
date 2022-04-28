@@ -2,11 +2,11 @@
 
 [![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://aprueser.github.io/TDAmeritradeAPI.jl/stable)
 [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://aprueser.github.io/TDAmeritradeAPI.jl/dev)
-[![Build Status](https://github.com/aprueser/TDAmeritradeAPI.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/aprueser/TDAmeritradeAPI.jl/actions/workflows/CI.yml?query=branch%3Amain)
-[![Build Status](https://travis-ci.com/aprueser/TDAmeritradeAPI.jl.svg?branch=main)](https://travis-ci.com/aprueser/TDAmeritradeAPI.jl)
 [![Coverage](https://codecov.io/gh/aprueser/TDAmeritradeAPI.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/aprueser/TDAmeritradeAPI.jl)
 
 ## TD Ameritrade API
+Julia implementation of the TD Ameritrade API.  This package provides convinience functions to format the return JSON into DataFrames.
+
 API Defintion, and basic guides can be found at: https://developer.tdameritrade.com/apis
 
 ## Installation
@@ -34,8 +34,9 @@ dfQQQ = TDAmeritradeAPI.api_getPriceHistoryDF("QQQ", keys)
 
 The Price History API additionally provides a "TS", and "TA" get function that return a Temporal.TS and TimeSeries.TimeArray respectivly 
 
-## Ticket Symbol support
+## Ticker Symbol support
 Any API call that uses the symbol as part of the URL will not support FUTURES, FOREX, or INDEX symbols with a / or $ in the symbol.  
+
 Any API call that uses the query string, or the message body can encode the symbol and support FUTURES, FOREX, and INDEX symbols
 
 ## TimeZone Notes
