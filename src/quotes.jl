@@ -339,15 +339,6 @@ mutable struct Equity
     realtimeEntitled::Bool
 end
 
-StructTypes.StructType(::Type{MutualFund})   = StructTypes.Mutable()
-StructTypes.StructType(::Type{Future})       = StructTypes.Mutable()
-StructTypes.StructType(::Type{FutureOption}) = StructTypes.Mutable()
-StructTypes.StructType(::Type{Index})        = StructTypes.Mutable()
-StructTypes.StructType(::Type{Option})       = StructTypes.Mutable()
-StructTypes.StructType(::Type{Forex})        = StructTypes.Mutable()
-StructTypes.StructType(::Type{ETF})          = StructTypes.Mutable()
-StructTypes.StructType(::Type{Equity})       = StructTypes.Mutable()
-
 ################################################################################
 ##
 ## Define custom HTTP error messages for the API call
