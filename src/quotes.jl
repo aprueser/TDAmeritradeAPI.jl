@@ -365,7 +365,7 @@ function _getQuote(symbol::String, apiKeys::TDAmeritradeAPI.apiKeys)
 
     queryParams = ["{symbol}" => symbol];
 
-    bodyParams = Dict{String, Union{Int64, String, Bool}}("apikey" => apiKeys.custKey);
+    bodyParams = Dict{String, Union{Number, String, Bool}}("apikey" => apiKeys.custKey);
 
     res = doHTTPCall("get_quote", queryParams = queryParams, bodyParams = bodyParams);
 
@@ -379,7 +379,7 @@ end
 function _getQuotes(symbols::String, apiKeys::TDAmeritradeAPI.apiKeys)
     @argcheck length(strip.(symbols)) > 0
 
-    bodyParams = Dict{String, Union{Int64, String, Bool}}("symbol" => symbols,
+    bodyParams = Dict{String, Union{Number, String, Bool}}("symbol" => symbols,
                                                           "apikey" => apiKeys.custKey);
 
     res = doHTTPCall("get_quotes", bodyParams = bodyParams);
@@ -534,11 +534,11 @@ function quotesToDataFrame(ljson::LazyJSON.Object{Nothing, String})::DataFrame
             ## Replace Missings first to simplify the @transform
             c != "divDate" && @transform!(df, $c = replace($c, missing => 0))
 
-            c == "quoteTimeInLong" && @transform! df @byrow begin :quoteTimeInLong = Dates.unix2datetime(:quoteTimeInLong / 1000) end
-            c == "tradeTimeInLong" && @transform! df @byrow begin :tradeTimeInLong = Dates.unix2datetime(:tradeTimeInLong / 1000) end
-            c == "lastTradingDay" && @transform! df @byrow begin :lastTradingDay = Dates.unix2datetime(:lastTradingDay / 1000) end
-            c == "regularMarketTradeTimeInLong" && @transform! df @byrow begin :regularMarketTradeTimeInLong = Dates.unix2datetime(:regularMarketTradeTimeInLong / 1000) end
-            c == "futureExpirationDate" && @transform! df @byrow begin :futureExpirationDate = Dates.unix2datetime(:futureExpirationDate / 1000) end
+            c == "quoteTimeInLong" && transform!(df, :quoteTimeInLong .=> fromUnix2Date .=> :quoteTimeInLong)
+            c == "tradeTimeInLong" && transform!(df, :tradeTimeInLong .=> fromUnix2Date .=> :tradeTimeInLong)
+            c == "lastTradingDay" && transform!(df, :lastTradingDay .=> fromUnix2Date .=> :lastTradingDay)
+            c == "regularMarketTradeTimeInLong" && transform!(df, :regularMarketTradeTimeInLong .=> fromUnix2Date .=> :regularMarketTradeTimeInLong)
+            c == "futureExpirationDate" && transform!(df, :futureExpirationDate .=> fromUnix2Date .=> :futureExpirationDate)
             c == "divDate" && @transform! df @byrow begin :divDate = DateTime(ismissing(:divDate) ? "1900-01-01 00:00:00.000" : :divDate, dateFmt) end
 
         end

@@ -103,7 +103,7 @@ function _getInstrument(cusip::String, apiKeys::TDAmeritradeAPI.apiKeys)
 
     queryParams = ["{cusip}" => cusip];
 
-    bodyParams = Dict{String, Union{Int64, String, Bool}}("apikey" => apiKeys.custKey);
+    bodyParams = Dict{String, Union{Number, String, Bool}}("apikey" => apiKeys.custKey);
 
     res = doHTTPCall("get_instrument", queryParams = queryParams, bodyParams = bodyParams);
 
@@ -120,7 +120,7 @@ function _searchInstruments(symbol::String, projection::String, apiKeys::TDAmeri
     @argcheck length(symbol) > 0
     @argcheck projection in ["fundamental", "symbol-search", "symbol-regex", "desc-search", "desc-regex"]
 
-    bodyParams = Dict{String, Union{Int64, String, Bool}}("symbol"     => symbol,
+    bodyParams = Dict{String, Union{Number, String, Bool}}("symbol"     => symbol,
                                                           "projection" => projection,
                                                           "apikey"     => apiKeys.custKey);
 
@@ -226,7 +226,7 @@ function instrumentsToDataFrame(ljson::LazyJSON.Object{Nothing, String}, project
         df = DataFrame(vec, copycols=false)
 
         DataFrames.insertcols!(df, 1, :cusip => fv["cusip"], :description => fv["description"], 
-                                        :exchange => fv["exchange"], :assetType => fv["assetType"])
+                                      :exchange => fv["exchange"], :assetType => fv["assetType"])
 
         @transform! df @byrow begin 
                     :dividendDate    = DateTime(ismissing(:dividendDate) || :dividendDate == " " ? "1900-01-01 00:00:00.000" : :dividendDate, dateformat"yyyy-mm-dd HH:MM:SS.sss") 

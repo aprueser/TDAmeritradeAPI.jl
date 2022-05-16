@@ -55,7 +55,7 @@ function _getPriceHistory(symbol::String, keys::apiKeys; periodType::String = "d
     queryParams = ["{symbol}" => symbol];
 
     if !isnothing(periodType) 
-        bodyParams = Dict{String, Union{Int64, String, Bool}}("periodType"            => periodType,
+        bodyParams = Dict{String, Union{Number, String, Bool}}("periodType"            => periodType,
                                                               "period"                => numPeriods,
                                                               "frequencyType"         => frequencyType,
                                                               "frequency"             => frequency,
@@ -64,7 +64,7 @@ function _getPriceHistory(symbol::String, keys::apiKeys; periodType::String = "d
     end
 
     if !isnothing(startDate)
-        bodyParams = Dict{String, Union{Int64, String, Bool}}("startDate"             => Dates.value(startDate) - Dates.UNIXEPOCH,
+        bodyParams = Dict{String, Union{Number, String, Bool}}("startDate"             => Dates.value(startDate) - Dates.UNIXEPOCH,
                                                               "endDate"               => Dates.value(endDate) - Dates.UNIXEPOCH,
                                                               "frequencyType"         => frequencyType,
                                                               "frequency"             => frequency,
@@ -179,12 +179,28 @@ end
 ##  Dates are in America/NewYork, and reflect when the candle was opened
 ##
 ###################################################################################################
+function parseRawPriceHistoryToDataFrame(httpRet::Dict{Symbol, Union{Int16, String, Vector{UInt8}}}, symbol::String)
+    
+    if haskey(httpRet, :code) && httpRet[:code] == 200
+        ljson = LazyJSON.value(httpRet[:body])
+
+        if haskey(ljson, "empty") && ljson["empty"] == false
+            df = priceHistoryToDataFrame(ljson)
+        else
+            df = DataFrame([:httpCode => httpRet[:code], :httpMessage => httpRet[:message], :results => "No OHLC data found for symbol: " * symbol])
+        end
+    else
+        df = DataFrame([:httpCode => httpRet[:code], :httpMessage => httpRet[:message], :results => httpRet[:body]])
+    end
+    
+    return(df);
+end
 
 function priceHistoryToDataFrame(ljson::LazyJSON.Object{Nothing, String})::DataFrame
     cl::CandleList = convert(CandleList, ljson)
 
     fields = Vector{String}(["Open", "High", "Low", "Close", "Volume"]);
-    index  = map(x -> Dates.unix2datetime(x.datetime/1000), cl.candles)
+    index  =  map(x -> fromUnix2Date(x.datetime), cl.candles)
     values = Array{Float64}(reduce(hcat, map(x -> [x.open, x.high, x.low, x.close, x.volume], cl.candles))');
 
     df = DataFrame(values, fields, copycols = false)
@@ -197,7 +213,7 @@ function priceHistoryToTemporalTS(ljson::LazyJSON.Object{Nothing, String})::Temp
     cl::CandleList = convert(CandleList, ljson)
 
     fields = Vector{String}(["Open", "High", "Low", "Close", "Volume"]);
-    index  =  map(x -> Dates.unix2datetime(x.datetime/1000), cl.candles)
+    index  =  map(x -> fromUnix2Date(x.datetime), cl.candles)
     values = Array{Float64}(reduce(hcat, map(x -> [x.open, x.high, x.low, x.close, x.volume], cl.candles))');
 
     ohlcv = Temporal.TS(values, index, fields)
@@ -209,7 +225,7 @@ function priceHistoryToTimeSeriesTA(ljson::LazyJSON.Object{Nothing, String})::Ti
     cl::CandleList = convert(CandleList, ljson)
 
     fields = Vector{String}(["Open", "High", "Low", "Close", "Volume"]);
-    index  =  map(x -> Dates.unix2datetime(x.datetime/1000), cl.candles)
+    index  =  map(x -> fromUnix2Date(x.datetime), cl.candles)
     values = Array{Float64}(reduce(hcat, map(x -> [x.open, x.high, x.low, x.close, x.volume], cl.candles))');
 
     ohlcv = TimeSeries.TimeArray(index, values, fields, String(ljson["symbol"]))

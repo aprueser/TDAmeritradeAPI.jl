@@ -1,5 +1,33 @@
 module TDAmeritradeAPI
 
+    ## Dependent Packages
+    using ArgCheck, HTTP,
+          LazyArrays, LazyJSON,  
+          Dates, TimeZones,
+          DataFrames, DataFramesMeta, 
+          TimeSeries, Temporal
+
+    mutable struct apiKeys
+        custKey::String
+        accessToken::String
+        accessTokenExp::DateTime
+        refreshToken::String
+        refreshTokenExp::DateTime
+        lastAPICallTime::DateTime
+        mode::String
+    end
+
+    ## Internal Module Imports
+    include("httpCalls.jl")
+    include("utils.jl")
+
+    include("optionschain.jl")
+    include("pricehistory.jl")
+    include("instruments.jl")
+    include("markethours.jl")
+    include("movers.jl")
+    include("quotes.jl")
+
     ## Function Exports
     export  ## Quotes
             api_getQuoteRaw,
@@ -22,40 +50,15 @@ module TDAmeritradeAPI
             api_getPriceHistoryDF,
             api_getPriceHistoryTA,
             api_getPriceHistoryTS,
+            parseRawPriceHistoryToDataFrame,
             ## OptionChains
             api_getOptionChainRaw,
             api_getOptionChainDF,
+            parseRawOptionChainToDataFrame,
             ## Supporting Objects
             apiKeys,
             listEndpoints,
             validMarkets;
-
-    ## Dependent Packages
-    using ArgCheck, HTTP,
-          LazyArrays, LazyJSON,  
-          Dates, TimeZones,
-          DataFrames, DataFramesMeta, 
-          TimeSeries, Temporal
-
-    mutable struct apiKeys
-        custKey::String
-        accessToken::String
-        accessTokenExp::DateTime
-        refreshToken::String
-        refreshTokenExp::DateTime
-        lastAPICallTime::DateTime
-        mode::String
-    end
-
-    ## Internal Module Imports
-    include("httpCalls.jl")
-
-    include("optionschain.jl")
-    include("pricehistory.jl")
-    include("instruments.jl")
-    include("markethours.jl")
-    include("movers.jl")
-    include("quotes.jl")
 
     ## Precompile directives
     precompile(api_getInstrumentRaw, (String, apiKeys));

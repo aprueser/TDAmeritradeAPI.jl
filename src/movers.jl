@@ -36,7 +36,7 @@ function _getMovers(index::String, direction::String, change::String, apiKeys::T
 
     queryParams = ["{index}" => index]
 
-    bodyParams = Dict{String, Union{Int64, String, Bool}}("direction" => direction,
+    bodyParams = Dict{String, Union{Number, String, Bool}}("direction" => direction,
                                                           "change"    => change,
                                                           "apikey"    => apiKeys.custKey);
 

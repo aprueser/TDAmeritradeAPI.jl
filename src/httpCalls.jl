@@ -68,7 +68,7 @@ function listEndpoints()::Dict{String, Dict{String, String}}
     return(endpoints)
 end
 
-function doHTTPCall(apiEndpoint::String; queryParams::Vector{Pair{String, String}} = Vector{Pair{String, String}}(), bodyParams::Dict{String, Union{Int64, String, Bool}} = DictDict{String, Union{Int64, String, Bool}}(), bearerToken::String = "")
+function doHTTPCall(apiEndpoint::String; queryParams::Vector{Pair{String, String}} = Vector{Pair{String, String}}(), bodyParams::Dict{String, Union{Number, String, Bool}} = DictDict{String, Union{Number, String, Bool}}(), bearerToken::String = "")
     @argcheck haskey(endpoints, apiEndpoint)
     @argcheck length(queryParams) > 0 || length(bodyParams) > 0
     @argcheck (bearerToken == "" && haskey(bodyParams, "apikey")) || startswith(bearerToken, "Bearer ")
@@ -106,7 +106,7 @@ function doHTTPCall(apiEndpoint::String; queryParams::Vector{Pair{String, String
 
     ## If the HTTP Status Code == 429 the API limit has been exceeded, sleep 1 second and try again.
     while(result.status == 429)
-        sleep(1)
+        sleep(0.5)
 
         result = makeHTTPCall(endpointHTTPMethod, string(uri), headers, bodyParams)
     end
@@ -125,11 +125,12 @@ function doHTTPCall(apiEndpoint::String; queryParams::Vector{Pair{String, String
     ## The Ameritrade API can return "NaN" for a number, which is not valid JSON, so replace it.
     return(Dict{Symbol, Union{String, Int16, Vector{UInt8}}}(:code => result.status, 
                                                              :message => HTTP.statustext(result.status), 
-                                                             :body => replace(String(result.body), "NaN" => "null")))
+                                                             :body => replace(String(result.body), "\"NaN\"" => "null")))
                                                              
 end
 
-function makeHTTPCall(httpMethod::String, uri::String, headers::Array{Pair{String, String}, 1}, bodyParams::Dict{String, Union{Int64, String, Bool}})
+function makeHTTPCall(httpMethod::String, uri::String, headers::Array{Pair{String, String}, 1}, bodyParams::Dict{String, Union{Number, String, Bool}})
+
     result = httpMethod == "GET"    ? HTTP.request("GET", string(uri), headers, status_exception=false)                      :
              httpMethod == "PUT"    ? HTTP.request("PUT", string(uri), headers, body = bodyParams, status_exception=false)   :
              httpMethod == "POST"   ? HTTP.request("POST", string(uri), headers, body = bodyParams, status_exception=false)  :

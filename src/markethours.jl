@@ -49,7 +49,7 @@ function _getMarketHours(market::String, apiKeys::apiKeys, marketDate::Date=toda
 
     queryParams = ["{market}" => market]
 
-    bodyParams = Dict{String, Union{Int64, String, Bool}}("date"   => string(marketDate),
+    bodyParams = Dict{String, Union{Number, String, Bool}}("date"   => string(marketDate),
                                                           "apikey" => apiKeys.custKey);
 
     res = doHTTPCall("get_market_hours_for_single_market", queryParams = queryParams, bodyParams = bodyParams);
@@ -65,7 +65,7 @@ function _getMarketHours(markets::Vector{String}, apiKeys::apiKeys, marketDate::
     @argcheck marketDate >= today()
     @argcheck length(markets) == length(intersect(markets, validMarkets))
     
-    bodyParams = Dict{String, Union{Int64, String, Bool}}("date"    => string(marketDate),
+    bodyParams = Dict{String, Union{Number, String, Bool}}("date"    => string(marketDate),
                                                           "markets" => join(markets, ","),
                                                           "apikey"  => apiKeys.custKey);
 
