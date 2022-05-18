@@ -10,6 +10,14 @@ struct Candle
     low::Float64
     open::Float64
     volume::Int64
+
+    ## There are some cases where the API returns a null value for the open, high, low values.  When this happens this will default to using the close value for all 4 ohlc data points.
+    function Candle(close::LazyJSON.Number{String}, datetime::LazyJSON.Number{String}, high::Union{Nothing, LazyJSON.Number{String}}, low::Union{Nothing, LazyJSON.Number{String}}, 
+                    open::Union{Nothing, LazyJSON.Number{String}}, volume::LazyJSON.Number{String})
+                    
+        new(convert(Float64, close), convert(Int64, datetime), isnothing(high) ? convert(Float64, close) : convert(Float64, high), 
+                    isnothing(low) ? convert(Float64, close) : convert(Float64, low), isnothing(open) ? convert(Float64, close) : convert(Float64, open), convert(Int64, volume))
+    end
 end
 
 struct CandleList
@@ -186,6 +194,40 @@ function parseRawPriceHistoryToDataFrame(httpRet::Dict{Symbol, Union{Int16, Stri
 
         if haskey(ljson, "empty") && ljson["empty"] == false
             df = priceHistoryToDataFrame(ljson)
+        else
+            df = DataFrame([:httpCode => httpRet[:code], :httpMessage => httpRet[:message], :results => "No OHLC data found for symbol: " * symbol])
+        end
+    else
+        df = DataFrame([:httpCode => httpRet[:code], :httpMessage => httpRet[:message], :results => httpRet[:body]])
+    end
+    
+    return(df);
+end
+
+function parseRawPriceHistoryToTemporalTS(httpRet::Dict{Symbol, Union{Int16, String, Vector{UInt8}}}, symbol::String)
+    
+    if haskey(httpRet, :code) && httpRet[:code] == 200
+        ljson = LazyJSON.value(httpRet[:body])
+
+        if haskey(ljson, "empty") && ljson["empty"] == false
+            df = priceHistoryToTemporalTS(ljson)
+        else
+            df = DataFrame([:httpCode => httpRet[:code], :httpMessage => httpRet[:message], :results => "No OHLC data found for symbol: " * symbol])
+        end
+    else
+        df = DataFrame([:httpCode => httpRet[:code], :httpMessage => httpRet[:message], :results => httpRet[:body]])
+    end
+    
+    return(df);
+end
+
+function parseRawPriceHistoryToTimeSeriesTA(httpRet::Dict{Symbol, Union{Int16, String, Vector{UInt8}}}, symbol::String)
+    
+    if haskey(httpRet, :code) && httpRet[:code] == 200
+        ljson = LazyJSON.value(httpRet[:body])
+
+        if haskey(ljson, "empty") && ljson["empty"] == false
+            df = priceHistoryToTimeSeriesTA(ljson)
         else
             df = DataFrame([:httpCode => httpRet[:code], :httpMessage => httpRet[:message], :results => "No OHLC data found for symbol: " * symbol])
         end

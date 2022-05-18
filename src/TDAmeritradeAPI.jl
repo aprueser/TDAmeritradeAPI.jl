@@ -51,6 +51,8 @@ module TDAmeritradeAPI
             api_getPriceHistoryTA,
             api_getPriceHistoryTS,
             parseRawPriceHistoryToDataFrame,
+            parseRawPriceHistoryToTemporalTS,
+            parseRawPriceHistoryToTimeSeriesTA,
             ## OptionChains
             api_getOptionChainRaw,
             api_getOptionChainDF,
