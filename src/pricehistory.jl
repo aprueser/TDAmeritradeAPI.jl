@@ -12,11 +12,15 @@ struct Candle
     volume::Int64
 
     ## There are some cases where the API returns a null value for the open, high, low values.  When this happens this will default to using the close value for all 4 ohlc data points.
-    function Candle(close::LazyJSON.Number{String}, datetime::LazyJSON.Number{String}, high::Union{Nothing, LazyJSON.Number{String}}, low::Union{Nothing, LazyJSON.Number{String}}, 
+    function Candle(close::Union{Nothing, LazyJSON.Number{String}}, datetime::LazyJSON.Number{String}, high::Union{Nothing, LazyJSON.Number{String}}, low::Union{Nothing, LazyJSON.Number{String}}, 
                     open::Union{Nothing, LazyJSON.Number{String}}, volume::LazyJSON.Number{String})
                     
-        new(convert(Float64, close), convert(Int64, datetime), isnothing(high) ? convert(Float64, close) : convert(Float64, high), 
-                    isnothing(low) ? convert(Float64, close) : convert(Float64, low), isnothing(open) ? convert(Float64, close) : convert(Float64, open), convert(Int64, volume))
+        new(isnothing(close) ? -1 : convert(Float64, close), 
+            convert(Int64, datetime), 
+            isnothing(high)  ? isnothing(close) ? -1 : convert(Float64, close) : convert(Float64, high), 
+            isnothing(low)   ? isnothing(close) ? -1 : convert(Float64, close) : convert(Float64, low), 
+            isnothing(open)  ? isnothing(close) ? -1 : convert(Float64, close) : convert(Float64, open), 
+            convert(Int64, volume))
     end
 end
 
