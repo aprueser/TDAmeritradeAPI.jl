@@ -67,7 +67,7 @@ function _getPriceHistory(symbol::String, keys::apiKeys; periodType::String = "d
     queryParams = ["{symbol}" => symbol];
 
     if !isnothing(periodType) 
-        bodyParams = Dict{String, Union{Number, String, Bool}}("periodType"            => periodType,
+        bodyParams = Dict{String, Union{Number, String, Bool}}("periodType"           => periodType,
                                                               "period"                => numPeriods,
                                                               "frequencyType"         => frequencyType,
                                                               "frequency"             => frequency,
@@ -76,7 +76,7 @@ function _getPriceHistory(symbol::String, keys::apiKeys; periodType::String = "d
     end
 
     if !isnothing(startDate)
-        bodyParams = Dict{String, Union{Number, String, Bool}}("startDate"             => Dates.value(startDate) - Dates.UNIXEPOCH,
+        bodyParams = Dict{String, Union{Number, String, Bool}}("startDate"            => Dates.value(startDate) - Dates.UNIXEPOCH,
                                                               "endDate"               => Dates.value(endDate) - Dates.UNIXEPOCH,
                                                               "frequencyType"         => frequencyType,
                                                               "frequency"             => frequency,
