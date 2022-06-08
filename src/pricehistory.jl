@@ -71,7 +71,7 @@ function _getPriceHistory(symbol::String, keys::apiKeys; periodType::String = "d
                                                               "period"                => numPeriods,
                                                               "frequencyType"         => frequencyType,
                                                               "frequency"             => frequency,
-                                                              "needExtendedHoursData" => needExtendedHoursData,
+                                                              "needExtendedHoursData" => frequencyType == "minute" ? needExtendedHoursData : false,
                                                               "apikey"                => keys.custKey);
     end
 
@@ -80,7 +80,7 @@ function _getPriceHistory(symbol::String, keys::apiKeys; periodType::String = "d
                                                               "endDate"               => Dates.value(endDate) - Dates.UNIXEPOCH,
                                                               "frequencyType"         => frequencyType,
                                                               "frequency"             => frequency,
-                                                              "needExtendedHoursData" => needExtendedHoursData,
+                                                              "needExtendedHoursData" => frequencyType == "minute" ? needExtendedHoursData : false,
                                                               "apikey"                => keys.custKey);
     end
 

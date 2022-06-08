@@ -100,15 +100,28 @@ function doHTTPCall(apiEndpoint::String; queryParams::Vector{Pair{String, String
         uri = HTTP.URI(endpointURL)
     end
 
-    println("Calling HTTP ", endpointHTTPMethod, " for URL: ", uri)
+    ##println("Calling HTTP ", endpointHTTPMethod, " for URL: ", uri)
+    startCall = Dates.now()
 
     result = makeHTTPCall(endpointHTTPMethod, string(uri), headers, bodyParams)
+    ##println("HTTP Result Code: ", result.status, " for URL: ", uri)
 
     ## If the HTTP Status Code == 429 the API limit has been exceeded, sleep 1 second and try again.
     while(result.status == 429)
         sleep(0.5)
 
         result = makeHTTPCall(endpointHTTPMethod, string(uri), headers, bodyParams)
+        ##println("HTTP Result Code: ", result.status, " for URL: ", uri)
+    end
+
+    ## The TD Ameritrade API is rate limited to 2 calls per second
+    ## If this call took less than 0.5 seconds, sleep the rest of the time
+    endCall = Dates.now()
+    callDuration = endCall - startCall
+
+    if callDuration.value < 0.5
+        ##println("Sleeping to minimize API throttling.")
+        sleep(0.5 - callDuration.value)
     end
                 
     ## Status:
