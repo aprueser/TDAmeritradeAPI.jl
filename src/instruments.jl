@@ -199,6 +199,22 @@ end
 ##  Instruments to DataFrame format conversion functions
 ##
 ################################################################################
+function parseRawInstrumentToDataFrame(httpRet::Dict{Symbol, Union{Int16, String, Vector{UInt8}}}, projection::String)
+    if haskey(httpRet, :code) && httpRet[:code] == 200
+        ljson = LazyJSON.value(httpRet[:body])
+
+        if length(ljson) > 0
+            df = instrumentsToDataFrame(ljson, projection)
+        else
+            df = DataFrame([:httpCode => httpRet[:code], :httpMessage => httpRet[:message], :results => "No Instrument data found for symbol/regexp: " * symbol])
+        end
+    else
+        df = DataFrame([:httpCode => httpRet[:code], :httpMessage => httpRet[:message], :results => httpRet[:body]])
+    end
+
+    return(df);
+end
+
 function instrumentsToDataFrame(ljson::LazyJSON.Array{Nothing, String}, projection::String)::DataFrame
     v = Vector{Instrument}(collect(values(ljson)))
 
@@ -233,7 +249,7 @@ function instrumentsToDataFrame(ljson::LazyJSON.Object{Nothing, String}, project
                     :dividendPayDate = DateTime(ismissing(:dividendPayDate) || :dividendPayDate == " " ? "1900-01-01 00:00:00.000" : :dividendPayDate, dateformat"yyyy-mm-dd HH:MM:SS.sss") 
         end
     
-        return(df)
+        return df
 
     elseif projection == "symbol-search" && at == "BOND"
 
