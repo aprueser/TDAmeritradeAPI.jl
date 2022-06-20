@@ -16,15 +16,15 @@ TimeSeries = "9e3dc215-6440-5c97-bce1-76c03772f85e"
 TimeZones = "f269a46b-ccf7-5d73-abea-4c690281aa53"
 
 [compat]
-HTTP = "0.9"
-LazyArrays = "0.22"
-TimeSeries = "0.23"
-TimeZones = "1"
-Temporal = "0.8"
+ArgCheck = "2"
 DataFrames = "1"
 DataFramesMeta = "0.11"
-ArgCheck = "2"
+HTTP = "0.9, 1"
+LazyArrays = "0.22"
 LazyJSON = "0.2"
+Temporal = "0.8"
+TimeSeries = "0.23"
+TimeZones = "1"
 julia = "1.7"
 
 [extras]
