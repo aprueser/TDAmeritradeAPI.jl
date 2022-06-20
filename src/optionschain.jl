@@ -291,7 +291,7 @@ function optionChainToDataFrame(ljson::LazyJSON.Object{Nothing, String}, symbol:
         transform!(df, :tradeTime_underlying .=> fromUnix2Date .=> :tradeTime_underlying)
     end
 
-    @time if ljson["status"] != "FAILED"
+    if ljson["status"] != "FAILED"
         transform!(df, :quoteTimeInLong .=> fromUnix2Date .=> :quoteTimeInLong)
         transform!(df, :tradeTimeInLong .=> fromUnix2Date .=> :tradeTimeInLong)
         transform!(df, :expirationDate .=> fromUnix2Date .=> :expirationDate)
