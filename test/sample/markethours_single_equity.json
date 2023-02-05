@@ -1,0 +1,33 @@
+{
+  "equity": {
+    "EQ": {
+      "date": "2022-08-23",
+      "marketType": "EQUITY",
+      "exchange": "NULL",
+      "category": "NULL",
+      "product": "EQ",
+      "productName": "equity",
+      "isOpen": true,
+      "sessionHours": {
+        "preMarket": [
+          {
+            "start": "2022-08-23T07:00:00-04:00",
+            "end": "2022-08-23T09:30:00-04:00"
+          }
+        ],
+        "regularMarket": [
+          {
+            "start": "2022-08-23T09:30:00-04:00",
+            "end": "2022-08-23T16:00:00-04:00"
+          }
+        ],
+        "postMarket": [
+          {
+            "start": "2022-08-23T16:00:00-04:00",
+            "end": "2022-08-23T20:00:00-04:00"
+          }
+        ]
+      }
+    }
+  }
+}

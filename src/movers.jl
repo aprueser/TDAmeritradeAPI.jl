@@ -3,14 +3,28 @@
 ## Define Julia structs to hold the return of the API call
 ##
 ################################################################################
-struct Mover
+mutable struct Mover
     change::Float64
     description::String
     direction::String
     last::Float64
     symbol::String
     totalVolume::Int64
+
+    Mover() = new()
 end
+
+StructTypes.StructType(::Type{Mover}) = StructTypes.Mutable();
+StructTypes.idproperty(::Type{Mover}) = :symbol
+
+mutable struct Movers <: AbstractArray{Mover, 1}
+    movers::Vector{Mover}        
+end                              
+                                 
+Base.getindex(m::Movers, i::Int) = getindex(m.movers, i)
+Base.size(m::Movers)             = size(m.movers)
+
+StructTypes.StructType(::Type{Movers}) = StructTypes.ArrayType();
 
 ################################################################################
 ##
@@ -29,7 +43,7 @@ moversHTTPErrorMsg = Dict{Int64, String}(
 ##  Movers - Core API Call Functions
 ##
 ###############################################################    
-function _getMovers(index::String, direction::String, change::String, apiKeys::TDAmeritradeAPI.apiKeys)
+function _getMovers(index::String, direction::String, change::String, apiKeys::TDAmeritradeAPI.apiKeys)::ErrorTypes.Result{String, String}
     @argcheck index in ["\$COMPX", "\$DJI", "\$SPX.X"]
     @argcheck direction in ["up", "down"]
     @argcheck change in ["percent", "value"]
@@ -40,13 +54,18 @@ function _getMovers(index::String, direction::String, change::String, apiKeys::T
                                                           "change"    => change,
                                                           "apikey"    => apiKeys.custKey);
 
-    res = doHTTPCall("get_movers", queryParams = queryParams, bodyParams = bodyParams);
+    doHTTPCall("get_movers", queryParams = queryParams, bodyParams = bodyParams);
+end
 
-    if haskey(res, :code) && res[:code] != 200
-        res[:body] = haskey(moversHTTPErrorMsg, res[:code]) ? moversHTTPErrorMsg[res[:code]] * ". Index: " * index : "Invalid API Call for index " * index;
-    end
+################################################################################
+##
+##  Movers to DataFrame format conversion function
+##
+#################################################################################
+function _moversJSONToDataFrame(rawJSON::String)::ErrorTypes.Option{DataFrame}
+    m::Movers = ErrorTypes.@?(moversToMoversStruct(rawJSON))
 
-    return(res)
+    some(DataFrame(m, copycols = false))
 end
 
 ###############################################################################
@@ -54,11 +73,13 @@ end
 ##  Quotes - Function signiatures to return the JSON return as a String
 ##
 ###############################################################################
-function api_getMoversRaw(index::String, direction::String, change::String, apiKeys::TDAmeritradeAPI.apiKeys)
+function api_getMoversAsJSON(index::String, direction::String, change::String, apiKeys::TDAmeritradeAPI.apiKeys)::ErrorTypes.Result{String, String}
+    @argcheck index in ["\$COMPX", "\$DJI", "\$SPX.X"]
+    @argcheck direction in ["up", "down"]
+    @argcheck change in ["percent", "value"]
     
-    httpRet = _getMovers(index, direction, change, apiKeys);
+    _getMovers(index, direction, change, apiKeys);
 
-    return(httpRet)
 end
 
 ###############################################################################
@@ -66,41 +87,33 @@ end
 ##  Movers - Function signiatures to return DataFrames
 ##
 ###############################################################################
-function api_getMoversDF(index::String, direction::String, change::String, apiKeys::TDAmeritradeAPI.apiKeys)::DataFrame
+function api_getMoversAsDataFrame(index::String, direction::String, change::String, apiKeys::TDAmeritradeAPI.apiKeys)::ErrorTypes.Option{DataFrame}
 
     httpRet = _getMovers(index, direction, change, apiKeys);
 
-    if haskey(httpRet, :code) && httpRet[:code] == 200
-        ljson = LazyJSON.value(httpRet[:body])
-
-        if length(ljson) > 0
-            df = moversToDataFrame(ljson)
-        else
-            df = DataFrame([:httpCode => httpRet[:code], :httpMessage => httpRet[:message], :results => "No Movers data found for index: " * index])
-        end
-    else
-        df = DataFrame([:httpCode => httpRet[:code], :httpMessage => httpRet[:message], :results => httpRet[:body]])
-    end
-    
-    return(df);
+    _moversToDataFrame(ErrorTypes.@?(httpRet))
 
 end
 
-################################################################################
+###############################################################################
 ##
-##  Movers to DataFrame format conversion functions
+##  Convert JSON to Struct
 ##
-################################################################################
-function moversToDataFrame(ljson::LazyJSON.Array{Nothing, String})::DataFrame
-
-    vec = Vector{Mover}()
-
-    for m in ljson
-        mv::Mover = convert(Mover, m)
-        push!(vec, mv)
-    end
-
-    df = DataFrame(vec, copycols = false)
-
-    return(df)
+###############################################################################
+function moversToMoversStruct(json_string::String)::ErrorTypes.Option{Movers}
+    some(JSON3.read(json_string, Movers))
 end
+
+###############################################################################
+##
+##  Convert Struct to JSON
+##
+###############################################################################
+function moversToJSON(m::Movers)::ErrorTypes.Option{String}
+    some(JSON3.write(m))
+end
+
+function parseMoversJSONToDataFrame(json_string::String)::ErrorTypes.Option{DataFrame}
+    _moversToDataFrame(json_string)
+end
+

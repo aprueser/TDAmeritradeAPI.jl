@@ -1,0 +1,82 @@
+[
+  {
+    "change": 1.9960784313725493,
+    "description": "Blue Water Vaccines, Inc. - Common Stock",
+    "direction": "up",
+    "last": 7.64,
+    "symbol": "BWV",
+    "totalVolume": 91271776
+  },
+  {
+    "change": 0.2726373082632359,
+    "description": "Cassava Sciences, Inc. - Common Stock",
+    "direction": "up",
+    "last": 25.72,
+    "symbol": "SAVA",
+    "totalVolume": 35022513
+  },
+  {
+    "change": 0.2098298676748583,
+    "description": "Kirkland's, Inc. - Common Stock",
+    "direction": "up",
+    "last": 6.4,
+    "symbol": "KIRK",
+    "totalVolume": 31468955
+  },
+  {
+    "change": 0.15207373271889404,
+    "description": "AeroClean Technologies, Inc. - Common Stock",
+    "direction": "up",
+    "last": 5,
+    "symbol": "AERC",
+    "totalVolume": 49462
+  },
+  {
+    "change": 0.15207373271889404,
+    "description": "Quhuo Limited - American Depository Shares Status Alert: Deficient and Delinquent",
+    "direction": "up",
+    "last": 5,
+    "symbol": "QH",
+    "totalVolume": 81340
+  },
+  {
+    "change": 0.11767554479418886,
+    "description": "Bed Bath & Beyond Inc. - Common Stock",
+    "direction": "up",
+    "last": 23.08,
+    "symbol": "BBBY",
+    "totalVolume": 261979262
+  },
+  {
+    "change": 0.11299435028248585,
+    "description": "Cogent Biosciences, Inc. - Common Stock",
+    "direction": "up",
+    "last": 15.76,
+    "symbol": "COGT",
+    "totalVolume": 4596666
+  },
+  {
+    "change": 0.1092436974789917,
+    "description": "ToughBuilt Industries, Inc. - Common Stock",
+    "direction": "up",
+    "last": 5.28,
+    "symbol": "TBLT",
+    "totalVolume": 6011168
+  },
+  {
+    "change": 0.09381237524950112,
+    "description": "Quoin Pharmaceuticals, Ltd. - American Depositary Shares",
+    "direction": "up",
+    "last": 5.48,
+    "symbol": "QNRX",
+    "totalVolume": 10554496
+  },
+  {
+    "change": 0.09086672879776322,
+    "description": "Cross Country Healthcare, Inc. - Common Stock",
+    "direction": "up",
+    "last": 23.41,
+    "symbol": "CCRN",
+    "totalVolume": 1809618
+  }
+]

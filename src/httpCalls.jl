@@ -1,6 +1,5 @@
-endpoint_base_url = "https://api.tdameritrade.com/v1/";
-
 endpoints = Dict{String, Dict{String, String}}(
+    "base"                => Dict("uri" => "https://api.tdameritrade.com/v1/",       "type" => "URL"),
 # Orders
     "cancel_order"        => Dict("uri" => "accounts/{accountId}/orders/{orderId}",  "type" => "DELETE"),
     "get_order"           => Dict("uri" => "accounts/{accountId}/orders/{orderId}",  "type" => "GET"),
@@ -68,13 +67,14 @@ function listEndpoints()::Dict{String, Dict{String, String}}
     return(endpoints)
 end
 
-function doHTTPCall(apiEndpoint::String; queryParams::Vector{Pair{String, String}} = Vector{Pair{String, String}}(), bodyParams::Dict{String, Union{Number, String, Bool}} = DictDict{String, Union{Number, String, Bool}}(), bearerToken::String = "")
+function doHTTPCall(apiEndpoint::String; queryParams::Vector{Pair{String, String}} = Vector{Pair{String, String}}(), 
+                                         bodyParams::Dict{String, Union{Number, String, Bool}} = DictDict{String, Union{Number, String, Bool}}(), bearerToken::String = "")::Result{String, String}
     @argcheck haskey(endpoints, apiEndpoint)
     @argcheck length(queryParams) > 0 || length(bodyParams) > 0
     @argcheck (bearerToken == "" && haskey(bodyParams, "apikey")) || startswith(bearerToken, "Bearer ")
     
     ## Lookup the endpoint details 
-    endpointURL        = endpoint_base_url * endpoints[apiEndpoint]["uri"];
+    endpointURL        = endpoints["base"]["uri"] * endpoints[apiEndpoint]["uri"];
     endpointHTTPMethod = endpoints[apiEndpoint]["type"]
 
     ## All TDAmeritrade calls send content in application/json, except token refresh authorization calls 
@@ -100,30 +100,17 @@ function doHTTPCall(apiEndpoint::String; queryParams::Vector{Pair{String, String
         uri = HTTP.URI(endpointURL)
     end
 
-    ##println("Calling HTTP ", endpointHTTPMethod, " for URL: ", uri)
-    startCall = Dates.now()
+    @debug "Calling" endpointHTTPMethod " for " uri
 
-    result = makeHTTPCall(endpointHTTPMethod, string(uri), headers, bodyParams)
-    ##println("HTTP Result Code: ", result.status, " for URL: ", uri)
+    result = endpointHTTPMethod == "GET"    ? HTTP.request("GET", string(uri), headers, status_exception=false)                      :
+             endpointHTTPMethod == "PUT"    ? HTTP.request("PUT", string(uri), headers, body = bodyParams, status_exception=false)   :
+             endpointHTTPMethod == "POST"   ? HTTP.request("POST", string(uri), headers, body = bodyParams, status_exception=false)  :
+             endpointHTTPMethod == "PATCH"  ? HTTP.request("PATCH", string(uri), headers, body = bodyParams, status_exception=false) :
+             endpointHTTPMethod == "DELETE" ? HTTP.request("DELETE", string(uri), headers, status_exception=false)                   : 
+             Nothing;
 
-    ## If the HTTP Status Code == 429 the API limit has been exceeded, sleep 1 second and try again.
-    while(result.status == 429)
-        sleep(0.5)
+    @debug "" result.status
 
-        result = makeHTTPCall(endpointHTTPMethod, string(uri), headers, bodyParams)
-        ##println("HTTP Result Code: ", result.status, " for URL: ", uri)
-    end
-
-    ## The TD Ameritrade API is rate limited to 2 calls per second
-    ## If this call took less than 0.5 seconds, sleep the rest of the time
-    endCall = Dates.now()
-    callDuration = endCall - startCall
-
-    if callDuration.value < 0.5
-        ##println("Sleeping to minimize API throttling.")
-        sleep(0.5 - callDuration.value)
-    end
-                
     ## Status:
     ## 200 - OK; Success
     ## 400 - An error message indicating the validation problem with the request.
@@ -136,20 +123,6 @@ function doHTTPCall(apiEndpoint::String; queryParams::Vector{Pair{String, String
     ## 503 - An error message indicating there is a temporary problem responding.
     ##
     ## The Ameritrade API can return "NaN" for a number, which is not valid JSON, so replace it.
-    return(Dict{Symbol, Union{String, Int16, Vector{UInt8}}}(:code => result.status, 
-                                                             :message => HTTP.statustext(result.status), 
-                                                             :body => replace(String(result.body), "\"NaN\"" => "null")))
+    result.status == 200 ? Ok(replace(String(result.body), "\"NaN\"" => "null")) : Err(string(result.status, "::", HTTP.statustext(result.status)))
                                                              
-end
-
-function makeHTTPCall(httpMethod::String, uri::String, headers::Array{Pair{String, String}, 1}, bodyParams::Dict{String, Union{Number, String, Bool}})
-
-    result = httpMethod == "GET"    ? HTTP.request("GET", string(uri), headers, status_exception=false)                      :
-             httpMethod == "PUT"    ? HTTP.request("PUT", string(uri), headers, body = bodyParams, status_exception=false)   :
-             httpMethod == "POST"   ? HTTP.request("POST", string(uri), headers, body = bodyParams, status_exception=false)  :
-             httpMethod == "PATCH"  ? HTTP.request("PATCH", string(uri), headers, body = bodyParams, status_exception=false) :
-             httpMethod == "DELETE" ? HTTP.request("DELETE", string(uri), headers, status_exception=false)                   : 
-             Nothing;
-
-    return(result);
 end

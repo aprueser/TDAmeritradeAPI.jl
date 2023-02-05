@@ -1,31 +1,30 @@
 name = "TDAmeritradeAPI"
 uuid = "c324db79-5286-4ae5-81de-7966373ec7a4"
 authors = ["Andrew Prueser <aprueser@gmail.com>"]
-version = "0.5.0"
+version = "0.5.5"
 
 [deps]
 ArgCheck = "dce04be8-c92d-5529-be00-80e4d2c0e197"
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
 DataFramesMeta = "1313f7d8-7da2-5740-9ea0-a2ca25f37964"
 Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
+ErrorTypes = "7f495686-c6d2-4c77-9e8e-e4c865675f9d"
 HTTP = "cd3eb016-35fb-5094-929b-558a96fad6f3"
-LazyArrays = "5078a376-72f3-5289-bfd5-ec5146d43c02"
-LazyJSON = "fc18253b-5e1b-504c-a4a2-9ece4944c004"
-Temporal = "a110ec8f-48c8-5d59-8f7e-f91bc4cc0c3d"
+JSON3 = "0f8b85d8-7281-11e9-16c2-39a750bddbf1"
+MiniLoggers = "93f3dd0f-005d-4452-894a-a31841fa4078"
+Parameters = "d96e819e-fc66-5662-9728-84c9c7592b0a"
+StructTypes = "856f2bd8-1eba-4b0a-8007-ebc267875bd4"
 TimeSeries = "9e3dc215-6440-5c97-bce1-76c03772f85e"
 TimeZones = "f269a46b-ccf7-5d73-abea-4c690281aa53"
 
 [compat]
-ArgCheck = "2"
-DataFrames = "1"
-DataFramesMeta = "0.11, 0.12"
+ArgCheck = ">= 2"
+DataFrames = ">= 1"
+DataFramesMeta = ">= 0.12"
 HTTP = ">= 0.9"
-LazyArrays = "0.22"
-LazyJSON = "0.2"
-Temporal = "0.8"
-TimeSeries = "0.23"
-TimeZones = "1"
-julia = "1.7"
+TimeSeries = ">= 0.23"
+TimeZones = ">= 1"
+julia = ">= 1.7"
 
 [extras]
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"

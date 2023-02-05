@@ -1,0 +1,28 @@
+{
+  "VLCAX": {
+    "assetType": "MUTUAL_FUND",
+    "assetMainType": "MUTUAL_FUND",
+    "cusip": "922908579",
+    "assetSubType": "",
+    "symbol": "VLCAX",
+    "description": "Vanguard Large Cap Index Fund Admiral Shs",
+    "closePrice": 99.44,
+    "netChange": -0.77,
+    "totalVolume": 0,
+    "tradeTimeInLong": 1660780800000,
+    "exchange": "m",
+    "exchangeName": "MUTUAL FUND",
+    "digits": 2,
+    "52WkHigh": 112,
+    "52WkLow": 84.51,
+    "nAV": 98.67,
+    "peRatio": 0,
+    "divAmount": 0,
+    "divYield": 0,
+    "divDate": "",
+    "securityStatus": "Normal",
+    "netPercentChangeInDouble": -0.7743,
+    "delayed": false,
+    "realtimeEntitled": true
+  }
+}

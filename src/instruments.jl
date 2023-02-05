@@ -3,20 +3,11 @@
 ## Define Julia structs to hold the return of the API call
 ##
 ################################################################################
-struct Bond
-    bondPrice::Union{Float64, Nothing}
-    cusip::Union{String, Nothing}
-    symbol::String
-    description::String
-    exchange::String
-    assetType::String
-end
-
-struct FundamentalData
+@with_kw mutable struct FundamentalData
     symbol::String
     high52::Float64
     low52::Float64
-    dividendAmount::Float64 
+    dividendAmount::Float64
     dividendYield::Float64
     dividendDate::String
     peRatio::Float64
@@ -60,23 +51,48 @@ struct FundamentalData
     vol10DayAvg::Float64
     vol3MonthAvg::Float64
 end
+StructTypes.StructType(::Type{FundamentalData}) = StructTypes.Mutable();
+StructTypes.idproperty(::Type{FundamentalData}) = :symbol
 
-struct Fundamental
-    fundamental::Dict{String, FundamentalData}
-    cusip::Union{String, Nothing}
-    symbol::String
-    description::String
-    exchange::String
-    assetType::String
-end   
-
-struct Instrument
-    cusip::Union{String, Nothing}
-    symbol::String
-    description::String
-    exchange::String
-    assetType::String
+@with_kw mutable struct Instrument
+    bondPrice::Union{Float64, Nothing} = nothing
+    cusip::Union{String, Nothing}      = nothing
+    symbol::String                     = "" 
+    description::String                = ""
+    exchange::String                   = ""
+    assetType::String                  = ""
+    fundamental::Union{FundamentalData, Nothing} = nothing
 end
+StructTypes.StructType(::Type{Instrument}) = StructTypes.Mutable();
+StructTypes.idproperty(::Type{Instrument}) = :symbol
+
+## Handle the Anonymous Dict that all search results are returned as
+mutable struct InstrumentDict <: AbstractDict{Symbol, Any}
+    instruments::Dict{Symbol, Instrument}
+
+    InstrumentDict(x::Dict{Symbol, Any}) = begin
+        for (k, v) in x
+            v["fundamental"] = haskey(v, "fundamental") ? FundamentalData(;NamedTuple{Tuple(Symbol.(keys(v["fundamental"])))}(values(v["fundamental"]))...) : nothing;
+            x[k] = Instrument(;NamedTuple{Tuple(Symbol.(keys(v)))}(values(v))...)
+        end
+
+        new(x)
+    end
+end
+Base.pairs(x::InstrumentDict)             = pairs(x.instruments)
+Base.length(x::InstrumentDict)            = length(x.instruments)
+Base.iterate(x::InstrumentDict)           = iterate(x.instruments)
+Base.iterate(x::InstrumentDict, i::Int64) = iterate(x.instruments, i)
+StructTypes.StructType(::Type{InstrumentDict}) = StructTypes.DictType();
+
+## Handle the anonymous array that all Instrument looks ups are returned as
+mutable struct InstrumentArray <: AbstractArray{Instrument, 1}     
+    instruments::Vector{Instrument}
+end
+Base.getindex(inst::InstrumentArray, i::Int) = getindex(inst.instruments, i)
+Base.size(inst::InstrumentArray)             = size(inst.instruments)
+
+StructTypes.StructType(::Type{InstrumentArray}) = StructTypes.ArrayType();
 
 ################################################################################
 ##
@@ -96,7 +112,7 @@ instrumentsHTTPErrorMsg = Dict{Int64, String}(
 ## Instruments - Core API Call Functions
 ##
 ###################################################################################
-function _getInstrument(cusip::String, apiKeys::TDAmeritradeAPI.apiKeys)
+function _getInstrument(cusip::String, apiKeys::TDAmeritradeAPI.apiKeys)::ErrorTypes.Result{String, String}
     @argcheck !ismissing(cusip)
     @argcheck !isnothing(cusip)
     @argcheck length(cusip) > 0
@@ -105,49 +121,49 @@ function _getInstrument(cusip::String, apiKeys::TDAmeritradeAPI.apiKeys)
 
     bodyParams = Dict{String, Union{Number, String, Bool}}("apikey" => apiKeys.custKey);
 
-    res = doHTTPCall("get_instrument", queryParams = queryParams, bodyParams = bodyParams);
-
-    if haskey(res, :code) && res[:code] != 200
-        res[:body] = haskey(instrumentsHTTPErrorMsg, res[:code]) ? instrumentsHTTPErrorMsg[res[:code]] * ". Symbol/cusip: " * cusip : "Invalid API Call for symbol/cusip " * cusip;
-    end
-
-    return(res)
+    doHTTPCall("get_instrument", queryParams = queryParams, bodyParams = bodyParams);
 end
 
-function _searchInstruments(symbol::String, projection::String, apiKeys::TDAmeritradeAPI.apiKeys)
+function _searchInstruments(symbol::String, projection::String, apiKeys::TDAmeritradeAPI.apiKeys)::ErrorTypes.Result{String, String}
     @argcheck !ismissing(symbol)
     @argcheck !isnothing(symbol)
     @argcheck length(symbol) > 0
     @argcheck projection in ["fundamental", "symbol-search", "symbol-regex", "desc-search", "desc-regex"]
 
-    bodyParams = Dict{String, Union{Number, String, Bool}}("symbol"     => symbol,
+    bodyParams = Dict{String, Union{Number, String, Bool}}("symbol"    => symbol,
                                                           "projection" => projection,
                                                           "apikey"     => apiKeys.custKey);
 
-    res = doHTTPCall("search_instruments", bodyParams = bodyParams);
+    doHTTPCall("search_instruments", bodyParams = bodyParams);
+end
 
-    if haskey(res, :code) && res[:code] != 200
-        res[:body] = haskey(instrumentsHTTPErrorMsg, res[:code]) ? instrumentsHTTPErrorMsg[res[:code]] * ". Symbol/regexp: " * symbol : "Invalid API Call for symbol/regexp " * symbol;
+################################################################################
+##
+##  Instruments to DataFrame format conversion function
+##
+#################################################################################
+function _instrumentJSONToDataFrame(rawJSON::String, api_call::String)::ErrorTypes.Option{DataFrame}
+    i::Union{InstrumentArray, InstrumentDict} = api_call == "array" ? ErrorTypes.@?(instrumentsToInstrumentArrayStruct(rawJSON)) : ErrorTypes.@?(instrumentsToInstrumentDictStruct(rawJSON))
+   
+    if api_call == "array" 
+        return some(DataFrame(values(i), copycols = false))
     end
 
-    return(res)
+    return some(DataFrame(values(i), copycols = false))
 end
+
 
 ###############################################################################
 ##
 ##  Instruments - Function signiatures to return the JSON return as a String
 ##
 ###############################################################################
-function api_getInstrumentRaw(cusip::String, apiKeys::TDAmeritradeAPI.apiKeys)
-    httpRet = _getInstrument(cusip, apiKeys);
-
-    return(httpRet)
+function api_getInstrumentAsJSON(cusip::String, apiKeys::TDAmeritradeAPI.apiKeys)::ErrorTypes.Result{String, String}
+   _getInstrument(cusip, apiKeys);
 end
 
-function api_searchInstrumentsRaw(symbol::String, projection::String, apiKeys::TDAmeritradeAPI.apiKeys)
-    httpRet = _searchInstruments(symbol, projection, apiKeys);
-
-    return(httpRet)
+function api_searchInstrumentsAsJSON(symbol::String, projection::String, apiKeys::TDAmeritradeAPI.apiKeys)::ErrorTypes.Result{String, String}
+    _searchInstruments(symbol, projection, apiKeys);
 end
 
 ###############################################################################
@@ -155,139 +171,49 @@ end
 ##  Instruments - Function signiatures to return DataFrames
 ##
 ###############################################################################
-function api_getInstrumentDF(cusip::String, apiKeys::TDAmeritradeAPI.apiKeys)::DataFrame
+function api_getInstrumentAsDataFrame(cusip::String, apiKeys::TDAmeritradeAPI.apiKeys)::ErrorTypes.Option{DataFrame}
 
     httpRet = _getInstrument(cusip, apiKeys);
 
-    if haskey(httpRet, :code) && httpRet[:code] == 200
-        ljson = LazyJSON.value(httpRet[:body])
-
-        if length(ljson) > 0 
-            df = instrumentsToDataFrame(ljson, "symbol-search")
-        else
-            df = DataFrame([:httpCode => httpRet[:code], :httpMessage => httpRet[:message], :results => "No Instrument data found for symbol/cusip: " * cusip])
-        end
-    else
-        df = DataFrame([:httpCode => httpRet[:code], :httpMessage => httpRet[:message], :results => httpRet[:body]])
-    end
-    
-    return(df);
+   _instrumentToDataFrame(ErrorTypes.@?(httpRet), "array")
 end
 
-function api_searchInstrumentsDF(symbol::String, projection::String, apiKeys::TDAmeritradeAPI.apiKeys)::DataFrame
+function api_searchInstrumentsAsDataFrame(symbol::String, projection::String, apiKeys::TDAmeritradeAPI.apiKeys)::ErrorTypes.Option{DataFrame}
 
     httpRet = _searchInstruments(symbol, projection, apiKeys)
 
-    if haskey(httpRet, :code) && httpRet[:code] == 200
-        ljson = LazyJSON.value(httpRet[:body])
-
-        if length(ljson) > 0 
-            df = instrumentsToDataFrame(ljson, projection)
-        else
-            df = DataFrame([:httpCode => httpRet[:code], :httpMessage => httpRet[:message], :results => "No Instrument data found for symbol/regexp: " * symbol])
-        end
-    else
-        df = DataFrame([:httpCode => httpRet[:code], :httpMessage => httpRet[:message], :results => httpRet[:body]])
-    end
-    
-    return(df);
+   _instrumentToDataFrame(ErrorTypes.@?(httpRet), "dict")
 end
 
+###############################################################################
+##
+##  Convert JSON to Struct
+##
+###############################################################################
+function instrumentsToInstrumentDictStruct(json_string::String)::ErrorTypes.Option{InstrumentDict}
+    some(JSON3.read(json_string, InstrumentDict))
+end
+
+function instrumentsToInstrumentArrayStruct(json_string::String)::ErrorTypes.Option{InstrumentArray}
+    some(JSON3.read(json_string, InstrumentArray))
+end
+
+###############################################################################
+##
+##  Convert Struct to JSON
+##
+###############################################################################
+function instrumentsToJSON(i::Union{InstrumentArray, InstrumentDict})::ErrorTypes.Option{String}
+    some(JSON3.write(i))
+end
 
 ################################################################################
 ##
 ##  Instruments to DataFrame format conversion functions
 ##
 ################################################################################
-function parseRawInstrumentToDataFrame(httpRet::Dict{Symbol, Union{Int16, String, Vector{UInt8}}}, projection::String)
-    if haskey(httpRet, :code) && httpRet[:code] == 200
-        ljson = LazyJSON.value(httpRet[:body])
-
-        if length(ljson) > 0
-            df = instrumentsToDataFrame(ljson, projection)
-        else
-            df = DataFrame([:httpCode => httpRet[:code], :httpMessage => httpRet[:message], :results => "No Instrument data found for symbol/regexp: " * symbol])
-        end
-    else
-        df = DataFrame([:httpCode => httpRet[:code], :httpMessage => httpRet[:message], :results => httpRet[:body]])
-    end
-
-    return(df);
-end
-
-function instrumentsToDataFrame(ljson::LazyJSON.Array{Nothing, String}, projection::String)::DataFrame
-    v = Vector{Instrument}(collect(values(ljson)))
-
-    nt = (cusip=BroadcastArray((x -> x.cusip), v), 
-            symbol=BroadcastArray((x -> x.symbol), v),
-            description=BroadcastArray((x -> x.description), v),
-            exchange=BroadcastArray((x -> x.exchange), v),
-            assetType=BroadcastArray((x -> x.assetType), v));
-
-    return DataFrame(nt, copycols=false)
-end
-
-function instrumentsToDataFrame(ljson::LazyJSON.Object{Nothing, String}, projection::String)::DataFrame
+function parseInstrumentsJSONToDataFrame(json_string::String, api_call::String)::ErrorTypes.Option{DataFrame}
+    @argcheck api_call in ["get", "search"]
     
-    at = first(values(ljson))["assetType"]
-
-    ## Handle the single returns first
-    if projection == "fundamental"
-    
-        fv = first(values(ljson))
-        
-        vec = Vector{FundamentalData}()
-        push!(vec, convert(FundamentalData, fv["fundamental"]))
-        
-        df = DataFrame(vec, copycols=false)
-
-        DataFrames.insertcols!(df, 1, :cusip => fv["cusip"], :description => fv["description"], 
-                                      :exchange => fv["exchange"], :assetType => fv["assetType"])
-
-        @transform! df @byrow begin 
-                    :dividendDate    = DateTime(ismissing(:dividendDate) || :dividendDate == " " ? "1900-01-01 00:00:00.000" : :dividendDate, dateformat"yyyy-mm-dd HH:MM:SS.sss") 
-                    :dividendPayDate = DateTime(ismissing(:dividendPayDate) || :dividendPayDate == " " ? "1900-01-01 00:00:00.000" : :dividendPayDate, dateformat"yyyy-mm-dd HH:MM:SS.sss") 
-        end
-    
-        return df
-
-    elseif projection == "symbol-search" && at == "BOND"
-
-        v = Vector{Bond}(collect(values(ljson)))
-
-        nt = (bondPrice=BroadcastArray((x -> x.bondPrice), v), 
-                cusip=BroadcastArray((x -> x.cusip), v), 
-                symbol=BroadcastArray((x -> x.symbol), v),
-                description=BroadcastArray((x -> x.description), v),
-                exchange=BroadcastArray((x -> x.exchange), v),
-                assetType=BroadcastArray((x -> x.assetType), v));
-
-        return DataFrame(nt, copycols=true)
-
-    elseif projection == "symbol-search" && at != "BOND"   
-
-        v = Vector{Instrument}(collect(values(ljson)))
-
-        nt = (cusip=BroadcastArray((x -> x.cusip), v), 
-                symbol=BroadcastArray((x -> x.symbol), v),
-                description=BroadcastArray((x -> x.description), v),
-                exchange=BroadcastArray((x -> x.exchange), v),
-                assetType=BroadcastArray((x -> x.assetType), v));
-
-        return DataFrame(nt, copycols=true)
-    
-    # Now handle the potential multiple returns of one of the regex searches
-    elseif projection == "symbol-regex" || projection == "desc-search" || projection == "desc-regex"
-
-        v = Vector{Instrument}(collect(values(ljson)))
-
-        nt = (cusip=BroadcastArray((x -> x.cusip), v), 
-                symbol=BroadcastArray((x -> x.symbol), v),
-                description=BroadcastArray((x -> x.description), v),
-                exchange=BroadcastArray((x -> x.exchange), v),
-                assetType=BroadcastArray((x -> x.assetType), v));
-
-        return DataFrame(nt, copycols=true)
-
-    end
+    _instrumentToDataFrame(json_string, api_call == "get" ? "array" : "dict")
 end

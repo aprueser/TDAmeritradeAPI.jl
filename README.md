@@ -32,7 +32,7 @@ Every method also has a DataFrames("DF") version that will parse the JSON and re
 dfQQQ = TDAmeritradeAPI.api_getPriceHistoryDF("QQQ", keys)
 ```
 
-The Price History API additionally provides a "TS", and "TA" get function that return a Temporal.TS and TimeSeries.TimeArray respectivly 
+The Price History API additionally provides an function that returns a TimeSeries.TimeArray: api_getPriceHistoryAsTimeSeriesTA
 
 ## Ticker Symbol support
 Any API call that uses the symbol as part of the URL will not support FUTURES, FOREX, or INDEX symbols with a / or $ in the symbol.  
@@ -67,5 +67,5 @@ Additional API that require Authentication that I will focus on implementing in 
 + WebSocket Streaming Data (Allows access to real-time streaming data, as well as OHLC data for FOREX, and FUTURES not supported by the Price History API)
 
 ## Other Notes 
-This is very much my first Julia project, and I am certain that there is oportunity to tune the performance of the to DataFrames functions.  
+This is very much my first serious Julia project, and I am certain that there is oportunity to tune the performance of many functions
 I try to make the output of each API call as "usable" as possible for the average person.  eg. all timeAsLong values are converted at a DateTime, or Date type.

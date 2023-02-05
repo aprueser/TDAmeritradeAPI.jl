@@ -1,11 +1,18 @@
 module TDAmeritradeAPI
 
     ## Dependent Packages
-    using ArgCheck, HTTP,
-          LazyArrays, LazyJSON,  
-          Dates, TimeZones,
-          DataFrames, DataFramesMeta, 
-          TimeSeries, Temporal
+    using ArgCheck, 
+          Dates,
+          DataFrames,
+          DataFramesMeta,
+          ErrorTypes, 
+          HTTP,
+          JSON3,
+          MiniLoggers, 
+          Parameters,
+          StructTypes,
+          TimeSeries, 
+          TimeZones
 
     mutable struct apiKeys
         custKey::String
@@ -30,49 +37,55 @@ module TDAmeritradeAPI
 
     ## Function Exports
     export  ## Quotes
-            api_getQuoteRaw,
-            api_getQuoteDF,
-            api_getQuotesRaw,
-            api_getQuotesDF,
+            api_getQuoteAsJSON,
+            api_getQuotesAsJSON,
+            api_getQuotesAsJSON,
+            api_getQuoteAsDataFrame,
+            api_getQuotesAsDataFrame,
+            api_getQuotesAsDataFrame,
+            parseQuotesJSONToDataFrame,
+            quotesToQuoteStruct,
+            quotesToJSON,
             ## Movers
-            api_getMoversRaw,
-            api_getMoversDF,
+            api_getMoversAsJSON,
+            api_getMoversAsDataFrame,
+            parseMoversJSONToDataFrame,
+            moversToMoversStruct,
+            moversToJSON,
             ## Instruments
-            api_getInstrumentRaw,
-            api_getInstrumentDF,
-            api_searchInstrumentsRaw,
-            api_searchInstrumentsDF,
+            api_getInstrumentAsJSON,
+            api_getInstrumentAsDataFrame,
+            api_searchInstrumentsAsJSON,
+            api_searchInstrumentsAsDataFrame,
+            parseInstrumentsJSONToDataFrame,
+            instrumentsToInstrumentDictStruct,
+            instrumentsToInstrumentArrayStruct,
+            instrumentsToJSON,
             ## MarketHours
-            api_getMarketHoursRaw,
-            api_getMarketHoursDF,
+            api_getMarketHoursAsJSON,
+            api_getMarketHoursAsDataFrame,
+            parseMarketHoursJSONToDataFrame,
+            marketHoursToMarketTypesStruct,
+            marketHoursToJSON,
             ## PriceHistory
-            api_getPriceHistoryRaw,
-            api_getPriceHistoryDF,
-            api_getPriceHistoryTA,
-            api_getPriceHistoryTS,
-            parseRawPriceHistoryToDataFrame,
-            parseRawPriceHistoryToTemporalTS,
-            parseRawPriceHistoryToTimeSeriesTA,
+            api_getPriceHistoryAsJSON,
+            api_getPriceHistoryAsDataFrame,
+            api_getPriceHistoryAsTimeArray,
+            parsePriceHistoryJSONToDataFrame,
+            parsePriceHistoryJSONToTimeArray,
+            priceHistoryToCandleListStruct,
+            priceHistoryToJSON,
             ## OptionChains
-            api_getOptionChainRaw,
-            api_getOptionChainDF,
-            parseRawOptionChainToDataFrame,
+            api_getOptionChainAsJSON,
+            api_getOptionChainAsDataFrame,
+            parseOptionChainJSONToDataFrame,
+            optionChainToOptionChainStruct,
+            optionChainToJSON,
             ## Supporting Objects
             apiKeys,
             listEndpoints,
             validMarkets;
 
     ## Precompile directives
-    precompile(api_getInstrumentRaw, (String, apiKeys));
-    precompile(api_searchInstrumentsRaw, (String, String, apiKeys));
-    precompile(api_getInstrumentDF, (String, apiKeys));
-    precompile(api_searchInstrumentsDF, (String, String, apiKeys));
-
-    precompile(api_getQuotesRaw, (Vector{String}, apiKeys))
-    precompile(api_getQuotesRaw, (String, apiKeys));
-    precompile(api_getQuoteRaw, (String, apiKeys));
-    precompile(api_getQuotesDF, (Vector{String}, apiKeys))
-    precompile(api_getQuotesDF, (String, apiKeys));
-    precompile(api_getQuoteDF, (String, apiKeys));
 
 end ## End TDAmeritradeAPI

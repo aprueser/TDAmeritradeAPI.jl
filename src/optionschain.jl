@@ -15,7 +15,7 @@ validOptionType   = ["S", "NS", "ALL"]
 ## Define Julia structs to hold the return of the API call
 ##
 ################################################################################
-struct Underlying
+mutable struct Underlying
     ask::Union{Float64, Nothing}
     askSize::Int64
     bid::Union{Float64, Nothing}
@@ -39,16 +39,26 @@ struct Underlying
     symbol::String
     totalVolume::Int64
     tradeTime::Int64
+
+    Underlying() = new()
 end
 
-struct OptionDeliverables
+StructTypes.StructType(::Type{Underlying}) = StructTypes.Mutable();
+StructTypes.idproperty(::Type{Underlying}) = :symbol
+
+mutable struct OptionDeliverables
     symbol::String
     assetType::String
     deliverableUnits::Union{Float64, Nothing}
     currencyType::Union{String, Nothing}
+
+    OptionDeliverables() = new()
 end
 
-struct StrikePriceMap
+StructTypes.StructType(::Type{OptionDeliverables}) = StructTypes.Mutable();
+StructTypes.idproperty(::Type{OptionDeliverables}) = :symbol
+
+@with_kw mutable struct OptionDetail
     putCall::String
     symbol::String
     description::String
@@ -81,7 +91,7 @@ struct StrikePriceMap
     theoreticalOptionValue::Union{Float64, Nothing}
     theoreticalVolatility::Union{Float64, Nothing}
     optionDeliverablesList::Union{Array{OptionDeliverables}, Nothing}
-    strikePrice::Union{Number, Nothing}
+    strikePrice::Union{Float64, Nothing}
     expirationDate::Int64
     daysToExpiration::Union{Float64, Nothing}
     expirationType::String
@@ -94,15 +104,49 @@ struct StrikePriceMap
     markChange::Union{Float64, Nothing}
     markPercentChange::Union{Float64, Nothing}
     intrinsicValue::Union{Float64, Nothing}
-    inTheMoney::Union{Bool, Nothing}
-    mini::Union{Bool, Nothing}
     pennyPilot::Union{Bool, Nothing}
+    mini::Union{Bool, Nothing}
     nonStandard::Union{Bool, Nothing}
+    inTheMoney::Union{Bool, Nothing}
 end 
 
-struct OptionChain
+StructTypes.StructType(::Type{OptionDetail}) = StructTypes.Mutable();
+StructTypes.idproperty(::Type{OptionDetail}) = :symbol
+
+##############################################################################################
+##
+## Custom Map over the callExpDateMap and putExpDateMap structures in the return
+##  JSON to skip the complex Dict{String, Dict{String, Vector{OptionDetail} ordering 
+##  of the data as the Dict keys do not add ny value.
+##
+##############################################################################################
+mutable struct ExpDateMap
+    dateMap::Vector{OptionDetail}                                                         
+                                                                                          
+    ExpDateMap(x::Vector{OptionDetail}) = new(x)                                          
+end                                                                                       
+                                                  
+function StructTypes.construct(ExpDateMap, x::Dict{String, Any})::ExpDateMap                                        
+    v = Vector{OptionDetail}()                                                            
+                                                                                          
+    for expDateDict in values(x)                                                          
+        for strikeDict in values(expDateDict)                                             
+            for opd in values(strikeDict)                                                 
+                push!(v, OptionDetail(;NamedTuple{Tuple(Symbol.(keys(opd)))}(values(opd))...))                                                                                                                                                                         
+            end                                                                           
+        end                                                                               
+    end                                                                                   
+                                                                                          
+    ExpDateMap(v)                                                                         
+end
+
+StructTypes.StructType(::Type{ExpDateMap}) = StructTypes.CustomStruct();                  
+StructTypes.lower(x::ExpDateMap) = x.dateMap
+
+mutable struct OptionChain
     symbol::String
     status::String
+    underlying::Union{Underlying, Nothing}
     strategy::String
     interval::Union{Float64, Nothing}
     isDelayed::Union{Bool, Nothing}
@@ -110,11 +154,16 @@ struct OptionChain
     interestRate::Union{Float64, Nothing}
     underlyingPrice::Union{Float64, Nothing}
     volatility::Union{Float64, Nothing}
-    daysToExpiration::Union{Int64, Nothing}
+    daysToExpiration::Union{Float64, Nothing}
     numberOfContracts::Union{Int64, Nothing}
-    putExpDateMap::Dict{String, Dict{String, Vector{StrikePriceMap}}}
-    callExpDateMap::Dict{String, Dict{String, Vector{StrikePriceMap}}}
+    callExpDateMap::Union{ExpDateMap, Nothing}
+    putExpDateMap::Union{ExpDateMap, Nothing}
+
+    OptionChain() = new()
 end
+
+StructTypes.StructType(::Type{OptionChain}) = StructTypes.Mutable();
+StructTypes.idproperty(::Type{OptionChain}) = :symbol
 
 ################################################################################
 ##
@@ -143,8 +192,8 @@ optionChainHTTPErrorMsg = Dict{Int64, String}(
 ##    ALL: All Strikes
 ###############################################################
 function _getOptionChain(symbol::String, apiKeys::TDAmeritradeAPI.apiKeys; contractType::String = "ALL", strikeCount::Int64 = 25, includeQuotes::Bool = false, strategy::String = "SINGLE", interval::Int64 = 10,
-                         strike::Union{Number, Nothing} = nothing, range::String = "ALL", fromDate::Date = today(), toDate::Union{Date, Nothing} = nothing, expMonth::String = "ALL",
-                         optionType::String = "ALL")
+                         strike::Union{Float64, Nothing} = nothing, range::String = "ALL", fromDate::Date = today(), toDate::Union{Date, Nothing} = nothing, expMonth::String = "ALL",
+                         optionType::String = "ALL")::ErrorTypes.Result{String, String}
         @argcheck length(symbol) > 0
         @argcheck uppercase(contractType) in validContractType
         @argcheck strikeCount > 0
@@ -157,7 +206,7 @@ function _getOptionChain(symbol::String, apiKeys::TDAmeritradeAPI.apiKeys; contr
         @argcheck uppercase(expMonth) in validExpMonth
         @argcheck uppercase(optionType) in validOptionType 
 
-    bodyParams = Dict{String, Union{Number, String, Bool}}("symbol"          => symbol,
+    bodyParams = Dict{String, Union{Float64, String, Bool}}("symbol"          => symbol,
                                                            "contractType"     => contractType,
                                                            "strikeCount"      => strikeCount,
                                                            "includeQuotes"    => includeQuotes,
@@ -176,13 +225,38 @@ function _getOptionChain(symbol::String, apiKeys::TDAmeritradeAPI.apiKeys; contr
         bodyParams["toDate"]   = Dates.format(toDate, "yyyy-mm-dd")
     end
 
-    res = doHTTPCall("get_option_chain", bodyParams = bodyParams);
+    doHTTPCall("get_option_chain", bodyParams = bodyParams);
+end
 
-    if haskey(res, :code) && res[:code] != 200
-        res[:body] = haskey(optionChainHTTPErrorMsg, res[:code]) ? optionChainHTTPErrorMsg[res[:code]] * ". Symbol: " * symbol : "Invalid API Call for symbol " * symbol;
+###############################################################################
+##
+## Internal mapping functions from JSON to DataFrame
+##
+###############################################################################
+function _optionChainJSONToDataFrame(rawJSON::String)::ErrorTypes.Option{DataFrame}
+    oc::OptionChain = ErrorTypes.@?(optionChainToOptionChainStruct(rawJSON))
+
+    df::DataFrame = DataFrame(vcat(oc.putExpDateMap.dateMap, oc.callExpDateMap.dateMap), copycols = false);
+
+    DataFrames.insertcols!(df, 1, :Status => oc.status, :Underlying => HTTP.unescapeuri(oc.symbol), :UnderlyingPrice => oc.underlyingPrice)
+
+    if !isnothing(oc.underlying)
+        underlyingDF = singleSturctToDataFrame(oc.underlying)
+
+        df = DataFrames.innerjoin(df, underlyingDF, on = :Underlying => :symbol, makeunique = true, renamecols = "" => "_underlying");
+
+        transform!(df, :quoteTime_underlying .=> fromUnix2Date .=> :quoteTime_underlying)
+        transform!(df, :tradeTime_underlying .=> fromUnix2Date .=> :tradeTime_underlying)
     end
 
-    return(res)
+    if oc.status != "FAILED"
+        transform!(df, :quoteTimeInLong .=> fromUnix2Date .=> :quoteTimeInLong)
+        transform!(df, :tradeTimeInLong .=> fromUnix2Date .=> :tradeTimeInLong)
+        transform!(df, :expirationDate .=> fromUnix2Date .=> :expirationDate)
+        transform!(df, :lastTradingDay .=> fromUnix2Date .=> :lastTradingDay)
+    end
+
+    some(df)
 end
 
 ###############################################################################
@@ -190,42 +264,45 @@ end
 ##  Option Chain - Function signiatures to return the JSON return as a String
 ##
 ###############################################################################
-function api_getOptionChainRaw(symbol::String, apiKeys::TDAmeritradeAPI.apiKeys; contractType::String = "ALL", strikeCount::Int64 = 25, includeQuotes::Bool = false, strategy::String = "SINGLE", interval::Int64 = 10,
-                               strike::Union{Number, Nothing} = nothing, range::String = "ALL", fromDate::Date = today(), toDate::Union{Date, Nothing} = nothing, expMonth::String = "ALL",
-                               optionType::String = "ALL")
+function api_getOptionChainAsJSON(symbol::String, apiKeys::TDAmeritradeAPI.apiKeys; contractType::String = "ALL", strikeCount::Int64 = 25, includeQuotes::Bool = false, strategy::String = "SINGLE", interval::Int64 = 10,
+                               strike::Union{Float64, Nothing} = nothing, range::String = "ALL", fromDate::Date = today(), toDate::Union{Date, Nothing} = nothing, expMonth::String = "ALL",
+                               optionType::String = "ALL")::ErrorTypes.Result{String, String}
 
-    return(_getOptionChain(symbol, apiKeys, contractType = contractType, strikeCount = strikeCount, includeQuotes = includeQuotes, strategy = strategy, interval = interval,
-                                            strike = strike, range = range, fromDate = fromDate, toDate = toDate, expMonth = expMonth, optionType = optionType));
-
+    _getOptionChain(symbol, apiKeys, contractType = contractType, strikeCount = strikeCount, includeQuotes = includeQuotes, strategy = strategy, interval = interval,
+                                            strike = strike, range = range, fromDate = fromDate, toDate = toDate, expMonth = expMonth, optionType = optionType);
 end
 
 ###############################################################################
 ##
-##  Quotes - Function signiatures to return DataFrames
+##  Option Chain - Function signiatures to return DataFrames
 ##
 ###############################################################################
-function api_getOptionChainDF(symbol::String, apiKeys::TDAmeritradeAPI.apiKeys; contractType::String = "ALL", strikeCount::Int64 = 25, includeQuotes::Bool = false, strategy::String = "SINGLE", interval::Int64 = 10,
-                              strike::Union{Number, Nothing} = nothing, range::String = "ALL", fromDate::Date = today(), toDate::Union{Date, Nothing} = nothing, expMonth::String = "ALL",
-                              optionType::String = "ALL")::DataFrame
-
-    df::DataFrame = DataFrame()
+function api_getOptionChainAsDataFrame(symbol::String, apiKeys::TDAmeritradeAPI.apiKeys; contractType::String = "ALL", strikeCount::Int64 = 25, includeQuotes::Bool = false, strategy::String = "SINGLE", interval::Int64 = 10,
+                              strike::Union{Float64, Nothing} = nothing, range::String = "ALL", fromDate::Date = today(), toDate::Union{Date, Nothing} = nothing, expMonth::String = "ALL",
+                              optionType::String = "ALL")::ErrorTypes.Option{DataFrame}
 
     httpRet = _getOptionChain(symbol, apiKeys, contractType = contractType, strikeCount = strikeCount, includeQuotes = includeQuotes, strategy = strategy, interval = interval,
                                                   strike = strike, range = range, fromDate = fromDate, toDate = toDate, expMonth = expMonth, optionType = optionType);
 
-    if haskey(httpRet, :code) && httpRet[:code] == 200
-        ljson = LazyJSON.value(httpRet[:body])
+     _optionChainToDataFrame(ErrorTypes.@?(httpRet))
+end
 
-        if haskey(ljson, "status") && ljson["status"] == "SUCCESS"
-            df = optionChainToDataFrame(ljson, symbol)
-        else
-            df = DataFrame([:httpCode => httpRet[:code], :httpMessage => httpRet[:message], :results => "No Option Chain data found for symbol: " * symbol])
-        end
-    else
-        df = DataFrame([:httpCode => httpRet[:code], :httpMessage => httpRet[:message], :results => httpRet[:body]])
-    end
-    
-    return(df);
+###############################################################################
+##
+##  Convert JSON to Struct
+##
+###############################################################################
+function optionChainToOptionChainStruct(json_string::String)::ErrorTypes.Option{OptionChain}
+    some(JSON3.read(json_string, OptionChain))
+end
+
+###############################################################################
+##
+##  Convert Struct to JSON
+##
+###############################################################################
+function optionChainToJSON(oc::OptionChain)::ErrorTypes.Option{String}
+    some(JSON3.write(cl))
 end
 
 ################################################################################
@@ -235,68 +312,6 @@ end
 ##  Note: The OptionsDeliverableList is not converted into the DataFrame
 ##
 ################################################################################
-function parseRawOptionChainToDataFrame(httpRet::Dict{Symbol, Union{Int16, String, Vector{UInt8}}}, symbol::String)
-    
-    if length(httpRet) > 0 && haskey(httpRet, :code) && httpRet[:code] == 200
-        ljson = LazyJSON.value(httpRet[:body])
-
-        if haskey(ljson, "status") && ljson["status"] == "SUCCESS"
-            df = optionChainToDataFrame(ljson, symbol)
-        else
-            df = DataFrame([:httpCode => httpRet[:code], :httpMessage => httpRet[:message], :results => "No Option Chain data found for symbol: " * symbol])
-        end
-    else
-        df = DataFrame([:httpCode => httpRet[:code], :httpMessage => httpRet[:message], :results => httpRet[:body]])
-    end
-    
-    return(df);
-end
-
-function optionChainToDataFrame(ljson::LazyJSON.Object{Nothing, String}, symbol::String)::DataFrame
-    
-    op::OptionChain = convert(OptionChain, ljson);
-
-    v = Vector{Underlying}()
-
-    if haskey(ljson, "underlying") && !isnothing(ljson["underlying"])
-        underlying = convert(Underlying, ljson["underlying"])
-        
-        push!(v, underlying)
-    end
-
-    vspm = Vector{StrikePriceMap}()
-
-    for expDate in keys(op.putExpDateMap)
-        for data in values(op.putExpDateMap[expDate])
-            push!(vspm, data[1])
-        end
-    end
-
-    for expDate in keys(op.callExpDateMap)
-        for data in values(op.callExpDateMap[expDate])
-            push!(vspm, data[1])
-        end
-    end
-
-    df::DataFrame = DataFrame(vspm, copycols = false);
-
-    DataFrames.insertcols!(df, 1, :Status => op.status, :Underlying => HTTP.unescapeuri(op.symbol), :UnderlyingPrice => op.underlyingPrice)
-
-    if !isempty(v)
-        underlyingDF = DataFrame(v, copycols = false)
-
-        df = DataFrames.innerjoin(df, underlyingDF, on = :Underlying => :symbol, makeunique = true, renamecols = "" => "_underlying");
-
-        transform!(df, :quoteTime_underlying .=> fromUnix2Date .=> :quoteTime_underlying)
-        transform!(df, :tradeTime_underlying .=> fromUnix2Date .=> :tradeTime_underlying)
-    end
-
-    if ljson["status"] != "FAILED"
-        transform!(df, :quoteTimeInLong .=> fromUnix2Date .=> :quoteTimeInLong)
-        transform!(df, :tradeTimeInLong .=> fromUnix2Date .=> :tradeTimeInLong)
-        transform!(df, :expirationDate .=> fromUnix2Date .=> :expirationDate)
-        transform!(df, :lastTradingDay .=> fromUnix2Date .=> :lastTradingDay)
-    end
-
-    return(df)
+function parseOptionChainJSONToDataFrame(json_string::String)::ErrorTypes.Option{DataFrame}
+    _optionChainToDataFrame(json_string)
 end

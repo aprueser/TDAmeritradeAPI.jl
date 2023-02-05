@@ -1,0 +1,38 @@
+{
+  "option": {
+    "EQO": {
+      "date": "2022-08-23",
+      "marketType": "OPTION",
+      "exchange": "NULL",
+      "category": "NULL",
+      "product": "EQO",
+      "productName": "equity option",
+      "isOpen": true,
+      "sessionHours": {
+        "regularMarket": [
+          {
+            "start": "2022-08-23T09:30:00-04:00",
+            "end": "2022-08-23T16:00:00-04:00"
+          }
+        ]
+      }
+    },
+    "IND": {
+      "date": "2022-08-23",
+      "marketType": "OPTION",
+      "exchange": "NULL",
+      "category": "NULL",
+      "product": "IND",
+      "productName": "index option",
+      "isOpen": true,
+      "sessionHours": {
+        "regularMarket": [
+          {
+            "start": "2022-08-23T09:30:00-04:00",
+            "end": "2022-08-23T16:15:00-04:00"
+          }
+        ]
+      }
+    }
+  }
+}

@@ -4,28 +4,57 @@
 ##
 ################################################################################
 validMarkets = ["EQUITY", "OPTION", "FUTURE", "BOND", "FOREX"];
+sessionTypes = ["preMarket", "regularMarket", "postMarket", "outcryMarket"]
 
 ################################################################################
 ##
 ## Define Julia structs to hold the return of the API call
 ##
 ################################################################################
-struct SessionHours
-    product::String
-    session::String
-    startTime::DateTime
-    endTime::DateTime
-end
 
-struct Market
-    date::String
-    marketType::String
-    exchange::Union{String, Nothing}
-    category::Union{String, Nothing}
-    product::String
-    productName::Union{String, Nothing}
-    isOpen::Bool
+mutable struct SessionHours
+      start::String
+      finish::String
+
+      SessionHours() = new()
 end
+StructTypes.StructType(::Type{SessionHours}) = StructTypes.Mutable();
+StructTypes.names(::Type{SessionHours}) = ((:finish, :end),);
+
+mutable struct Sessions
+      preMarket::Array{SessionHours, 1}
+      regularMarket::Array{SessionHours, 1}
+      postMarket::Array{SessionHours, 1}
+      outcryMarket::Array{SessionHours, 1}
+
+      Sessions() = new()
+end
+StructTypes.StructType(::Type{Sessions}) = StructTypes.Mutable();
+
+mutable struct Market
+      date::Date
+      marketType::Union{String, Nothing}
+      exchange::Union{String, Nothing}
+      category::Union{String, Nothing}
+      product::Union{String, Nothing}
+      productName::Union{String, Nothing}
+      isOpen::Bool
+      sessionHours::Union{Sessions, Nothing}
+
+      Market() = new()
+end
+StructTypes.StructType(::Type{Market}) = StructTypes.Mutable();
+
+mutable struct MarketTypes
+    equity::Dict{String, Market}
+    option::Dict{String, Market}
+    future::Dict{String, Market}
+    bond::Dict{String, Market}
+    forex::Dict{String, Market}
+
+    MarketTypes() = new()
+end
+StructTypes.StructType(::Type{MarketTypes}) = StructTypes.Mutable();
 
 ################################################################################
 ##
@@ -43,7 +72,7 @@ marketHoursHTTPErrorMsg = Dict{Int64, String}(
 ##  MarketHours - Core API Call Functions
 ##
 ################################################################################
-function _getMarketHours(market::String, apiKeys::apiKeys, marketDate::Date=today() + Dates.Day(1))
+function _getMarketHours(market::String, apiKeys::apiKeys, marketDate::Date=today() + Dates.Day(1))::ErrorTypes.Result{String, String}
     @argcheck marketDate >= today()
     @argcheck market in validMarkets
 
@@ -52,30 +81,71 @@ function _getMarketHours(market::String, apiKeys::apiKeys, marketDate::Date=toda
     bodyParams = Dict{String, Union{Number, String, Bool}}("date"   => string(marketDate),
                                                           "apikey" => apiKeys.custKey);
 
-    res = doHTTPCall("get_market_hours_for_single_market", queryParams = queryParams, bodyParams = bodyParams);
-
-    if haskey(res, :code) && res[:code] != 200
-        res[:body] = haskey(marketHoursHTTPErrorMsg, res[:code]) ? marketHoursHTTPErrorMsg[res[:code]] * ". Market: " * market : "Invalid API Call for market " * market;
-    end
-
-    return(res)
+    doHTTPCall("get_market_hours_for_single_market", queryParams = queryParams, bodyParams = bodyParams);
 end
 
-function _getMarketHours(markets::Vector{String}, apiKeys::apiKeys, marketDate::Date=today() + Dates.Day(1))
+function _getMarketHours(markets::Vector{String}, apiKeys::apiKeys, marketDate::Date=today() + Dates.Day(1))::ErrorTypes.Result{String, String}
     @argcheck marketDate >= today()
     @argcheck length(markets) == length(intersect(markets, validMarkets))
     
     bodyParams = Dict{String, Union{Number, String, Bool}}("date"    => string(marketDate),
-                                                          "markets" => join(markets, ","),
-                                                          "apikey"  => apiKeys.custKey);
+                                                           "markets" => join(markets, ","),
+                                                           "apikey"  => apiKeys.custKey);
 
-    res = doHTTPCall("get_market_hours_for_multiple_markets", bodyParams = bodyParams);
+    doHTTPCall("get_market_hours_for_multiple_markets", bodyParams = bodyParams);
+end
 
-    if haskey(res, :code) && res[:code] != 200
-        res[:body] = haskey(marketHoursHTTPErrorMsg, res[:code]) ? marketHoursHTTPErrorMsg[res[:code]] * ". Markets: " * join(markets, ",") : "Invalid API Call for market " * join(markets, ",");
-    end
+################################################################################
+##
+## Flatten the structs to a DataFrame
+##
+################################################################################
+function _marketSessionStructToDataFrame(type::String, product::String, s::Sessions)::ErrorTypes.Option{DataFrame}
+    dateTimeFmt = Dates.DateFormat("yyyy-mm-ddTHH:MM:SSzzzz");
 
-    return(res)
+    sess = DataFrame(marketType = type, product = product)
+    for vs in sessionTypes
+        tupleNames = (:marketType, :product, Symbol(vs * "_openDateTime"), Symbol(vs * "_closeDateTime"));
+        if isdefined(s, Symbol(vs))
+            sh = getproperty(s, Symbol(vs))[1]
+            tupleValues = (type, product, DateTime(sh.start, dateTimeFmt), DateTime(sh.finish, dateTimeFmt))
+        else    
+            tupleValues = (type, product, nothing, nothing);
+        end     
+       
+        # Join the sessions into a single horizontal row
+        sess = innerjoin(sess, DataFrame([NamedTuple{tupleNames, Tuple{String, String, Union{DateTime, Nothing}, Union{DateTime, Nothing}}}(tupleValues)]), on = [:marketType, :product])
+    end         
+                
+    some(sess)        
+end             
+                
+function _marketTypesStructToDataFrame(s::MarketTypes)::ErrorTypes.Option{DataFrame}
+    mkts::Union{DataFrame, Nothing} = nothing
+    for mkt in lowercase.(validMarkets)
+        if isdefined(s, Symbol(mkt))                                                                                                                                                                                             
+            for v in values(getproperty(s, Symbol(mkt)))
+                shdf = isdefined(v, :sessionHours) && !isnothing(v.sessionHours) ? ErrorTypes.@?(_marketSessionStructToDataFrame(v.marketType, v.product, v.sessionHours)) : DataFrame(marketType = v.marketType, product = v.product)
+                mktdf = leftjoin(DataFrame([v]), shdf, on = [:marketType, :product])
+                select!(mktdf, Not(:sessionHours))
+                
+                mkts = isnothing(mkts) ? mktdf : vcat(mkts, mktdf, cols = :union)
+            end 
+        end 
+    end  
+                
+    some(mkts)        
+end 
+
+################################################################################
+##
+##  Market HourMarket Hours to DataFrame format conversion function
+##
+#################################################################################
+function _marketHoursJSONToDataFrame(rawJSON::String)::ErrorTypes.Option{DataFrame}
+    mt::MarketTypes = ErrorTypes.@?(marketHoursToMarketTypesStruct(rawJSON))
+
+    _marketTypesStructToDataFrame(mt)
 end
 
 ###############################################################################
@@ -83,61 +153,60 @@ end
 ##  Market Hours - Function signiatures to return the JSON return as a String
 ##
 ###############################################################################
-function api_getMarketHoursRaw(market::String, apiKeys::apiKeys, marketDate::Date=today() + Dates.Day(1))
+function api_getMarketHoursAsJSON(market::String, apiKeys::apiKeys; marketDate::Date=Dates.dayofweek(today()) >= 6 ? today() + Dates.Day(8-Dates.dayofweek(today())) : today())::ErrorTypes.Result{String, String}
+    @argcheck marketDate >= today()
+    @argcheck market in validMarkets
 
-    httpRet = _getMarketHours(market, apiKeys, marketDate);
-
-    return(httpRet)
+    _getMarketHours(market, apiKeys, marketDate);
 end
 
-function api_getMarketHoursRaw(markets::Vector{String}, apiKeys::apiKeys, marketDate::Date=today() + Dates.Day(1))
 
-    httpRet = _getMarketHours(markets, apiKeys, marketDate);
+function api_getMarketHoursAsJSON(markets::Vector{String}, apiKeys::apiKeys; marketDate::Date=Dates.dayofweek(today()) >= 6 ? today() + Dates.Day(8-Dates.dayofweek(today())) : today())::ErrorTypes.Result{String, String}
+    @argcheck marketDate >= today()
+    @argcheck length(markets) == length(intersect(markets, validMarkets))
 
-    return(httpRet)
+    _getMarketHours(markets, apiKeys, marketDate);
 end
 
 ###############################################################################
 ##
-##  Quotes - Function signiatures to return DataFrames
+##  MarketHours - Function signiatures to return DataFrames
 ##
 ###############################################################################
-function api_getMarketHoursDF(market::String, apiKeys::apiKeys, marketDate::Date=today() + Dates.Day(1))::DataFrame
+function api_getMarketHoursAsDataFrame(market::String, apiKeys::apiKeys, marketDate::Date=Dates.dayofweek(today()) >= 6 ? today() + Dates.Day(8-Dates.dayofweek(today())) : today())::ErrorTypes.Option{DataFrame}
+    @argcheck marketDate >= today()
+    @argcheck market in validMarkets
 
     httpRet = _getMarketHours(market, apiKeys, marketDate);
 
-    if haskey(httpRet, :code) && httpRet[:code] == 200
-        ljson = LazyJSON.value(httpRet[:body])
-
-        if length(ljson) > 0 && haskey(ljson, lowercase(market))
-            df = marketHoursToDataFrame(ljson)
-        else
-            df = DataFrame([:httpCode => httpRet[:code], :httpMessage => httpRet[:message], :results => "No Market Hours data found for market: " * market])
-        end
-    else
-        df = DataFrame([:httpCode => httpRet[:code], :httpMessage => httpRet[:message], :results => httpRet[:body]])
-    end
-    
-    return(df);
+    _marketHoursToDataFrame(ErrorTypes.@?(httpRet))
 end
 
-function api_getMarketHoursDF(markets::Vector{String}, apiKeys::apiKeys, marketDate::Date=today() + Dates.Day(1))::DataFrame
+function api_getMarketHoursAsDataFrame(markets::Vector{String}, apiKeys::apiKeys, marketDate::Date=Dates.dayofweek(today()) >= 6 ? today() + Dates.Day(8-Dates.dayofweek(today())) : today())::ErrorTypes.Option{DataFrame}
+    @argcheck marketDate >= today()
+    @argcheck length(markets) == length(intersect(markets, validMarkets))
     
     httpRet = _getMarketHours(markets, apiKeys, marketDate);
 
-    if haskey(httpRet, :code) && httpRet[:code] == 200
-        ljson = LazyJSON.value(httpRet[:body])
+    _marketHoursToDataFrame(ErrorTypes.@?(httpRet))
+end
 
-        if length(ljson) > 0 && haskey(ljson, lowercase(markets[1]))
-            df = marketHoursToDataFrame(ljson)
-        else
-            df = DataFrame([:httpCode => httpRet[:code], :httpMessage => httpRet[:message], :results => "No Market Hours data found for markets: " * join(market, ",")])
-        end
-    else
-        df = DataFrame([:httpCode => httpRet[:code], :httpMessage => httpRet[:message], :results => httpRet[:body]])
-    end
-    
-    return(df);
+###############################################################################
+##
+##  Convert JSON to Struct
+##
+###############################################################################
+function marketHoursToMarketTypesStruct(json_string::String)::ErrorTypes.Option{MarketTypes}
+    some(JSON3.read(json_string, MarketTypes))
+end
+
+###############################################################################
+##
+##  Convert Struct to JSON
+##
+###############################################################################
+function marketHoursToJSON(m::MarketTypes)::ErrorTypes.Option{String}
+    some(JSON3.write(m))
 end
 
 ################################################################################
@@ -145,51 +214,6 @@ end
 ##  MarketHours to DataFrame format conversion functions
 ##
 ################################################################################
-function marketHoursToDataFrame(ljson::LazyJSON.Object{Nothing, String})::DataFrame
-    dateFmt     = Dates.DateFormat("yyyy-mm-dd");
-    dateTimeFmt = Dates.DateFormat("yyyy-mm-ddTHH:MM:SSzzzz");
-
-    sessionTypes = ["preMarket", "regularMarket", "postMarket", "outcryMarket"]
-
-    vecMarket = Vector{Market}()
-    vecHours  = Vector{SessionHours}()
-    for k::String in keys(ljson)
-        for (ky, vy) in ljson[k]
-            push!(vecMarket, convert(Market, vy))
-    
-            if !isnothing(vy["sessionHours"])
-                if haskey(vy["sessionHours"], "preMarket")
-                    push!(vecHours, SessionHours(ky, "preMarket", DateTime(ZonedDateTime(String(vy["sessionHours"]["preMarket"][1]["start"]), dateTimeFmt)), 
-                                                                  DateTime(ZonedDateTime(String(vy["sessionHours"]["preMarket"][1]["end"]), dateTimeFmt))))
-                end
-                
-                if haskey(vy["sessionHours"], "regularMarket")
-                    push!(vecHours, SessionHours(ky, "regularMarket", DateTime(ZonedDateTime(String(vy["sessionHours"]["regularMarket"][1]["start"]), dateTimeFmt)), 
-                                                                      DateTime(ZonedDateTime(String(vy["sessionHours"]["regularMarket"][1]["end"]), dateTimeFmt))))
-                end
-                
-                if haskey(vy["sessionHours"], "postMarket")
-                    push!(vecHours, SessionHours(ky, "postMarket", DateTime(ZonedDateTime(String(vy["sessionHours"]["postMarket"][1]["start"]), dateTimeFmt)), 
-                                                                   DateTime(ZonedDateTime(String(vy["sessionHours"]["postMarket"][1]["end"]), dateTimeFmt))))
-                end
-    
-                if haskey(vy["sessionHours"], "outcryMarket")
-                    push!(vecHours, SessionHours(ky, "outcryMarket", DateTime(ZonedDateTime(String(vy["sessionHours"]["outcryMarket"][1]["start"]), dateTimeFmt)), 
-                                                                     DateTime(ZonedDateTime(String(vy["sessionHours"]["outcryMarket"][1]["end"]), dateTimeFmt))))
-                end
-            end
-        end
-    end
-    
-    df = leftjoin(DataFrame(vecMarket, copycols = false), DataFrame(vecHours, copycols = false), on = :product)
-
-    @transform! df begin
-        :date = Date.(:date, dateFmt)
-    end
-
-    @transform! df begin
-        :dayName = Dates.dayname.(:date)
-    end
-
-    return(df)
+function parseMarketHoursJSONToDataFrame(json_string::String)::ErrorTypes.Option{DataFrame}
+    _marketHoursToDataFrame(json_string)
 end

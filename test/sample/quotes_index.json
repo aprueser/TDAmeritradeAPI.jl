@@ -1,0 +1,27 @@
+{
+  "$COMPX": {
+    "assetType": "INDEX",
+    "assetMainType": "INDEX",
+    "cusip": "",
+    "assetSubType": "",
+    "symbol": "$COMPX",
+    "description": "NASDAQ COMPOSITE INDEX (COMBINED)",
+    "lastPrice": 12938.123,
+    "openPrice": 12968.627,
+    "highPrice": 13053.5088,
+    "lowPrice": 12863.0059,
+    "closePrice": 13102.5498,
+    "netChange": -164.427,
+    "totalVolume": 4659496453,
+    "tradeTimeInLong": 1660770959000,
+    "exchange": "x",
+    "exchangeName": "INDICES",
+    "digits": 2,
+    "52WkHigh": 16212.2305,
+    "52WkLow": 10565.1396,
+    "securityStatus": "Closed",
+    "netPercentChangeInDouble": -1.2549,
+    "delayed": false,
+    "realtimeEntitled": true
+  }
+}

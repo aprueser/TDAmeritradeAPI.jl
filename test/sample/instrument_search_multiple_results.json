@@ -1,0 +1,37 @@
+{
+   "594NSP015": {
+                         "cusip": "594NSP015",
+                        "symbol": "594NSP015",
+                   "description": "MICROSOFT CORP",
+                      "exchange": "Unknown",
+                     "assetType": "UNKNOWN"
+                },
+      "MSFT21": {
+                         "cusip": "594918AC8",
+                        "symbol": "MSFT21",
+                   "description": "Microsoft Corporation",
+                      "exchange": "NYSE",
+                     "assetType": "EQUITY"
+                },
+      "MSFT28": {
+                         "cusip": "594918AB0",
+                        "symbol": "MSFT28",
+                   "description": "Microsoft Corporation",
+                      "exchange": "NYSE",
+                     "assetType": "EQUITY"
+                },
+      "MSFT33": {
+                         "cusip": "594918AA2",
+                        "symbol": "MSFT33",
+                   "description": "Microsoft Corporation",
+                      "exchange": "NYSE",
+                     "assetType": "EQUITY"
+                },
+        "MSFT": {
+                         "cusip": "594918104",
+                        "symbol": "MSFT",
+                   "description": "Microsoft Corporation - Common Stock",
+                      "exchange": "NASDAQ",
+                     "assetType": "EQUITY"
+                }
+}
