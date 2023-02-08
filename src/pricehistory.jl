@@ -147,7 +147,7 @@ function api_getPriceHistoryAsDataFrame(symbol::String, keys::apiKeys; periodTyp
                                              frequencyType = frequencyType, frequency = frequency, 
                                              endDate = endDate, startDate = startDate, needExtendedHoursData = needExtendedHoursData);
 
-    _priceHistoryToDataFrame(ErrorTypes.@?(httpRet))
+    _priceHistoryJSONToDataFrame(ErrorTypes.@?(httpRet))
 end
 
 function api_getPriceHistoryAsTimeArray(symbol::String, keys::apiKeys; periodType::String = "day", numPeriods::Int64 = (periodType == "day" ? 10 : 1), 
@@ -159,7 +159,7 @@ function api_getPriceHistoryAsTimeArray(symbol::String, keys::apiKeys; periodTyp
                                              frequencyType = frequencyType, frequency = frequency, 
                                              endDate = endDate, startDate = startDate, needExtendedHoursData = needExtendedHoursData);
  
-    _priceHistoryToTimeArray(ErrorTypes.@?(httpRet))
+    _priceHistoryJSONToTimeArray(ErrorTypes.@?(httpRet))
 end
 
 ###############################################################################
@@ -190,10 +190,10 @@ end
 ##
 ###################################################################################################
 function parsePriceHistoryJSONToDataFrame(json_string::String)::ErrorTypes.Option{DataFrame}
-    _priceHistoryToDataFrame(json_string)
+    _priceHistoryJSONToDataFrame(json_string)
 end
 
 function parsePriceHistoryJSONToTimeArray(json_string::String)::ErrorTypes.Option{TimeSeries.TimeArray}
-    _priceHistoryToTimeArray(json_string)
+    _priceHistoryJSONToTimeArray(json_string)
 end
 
