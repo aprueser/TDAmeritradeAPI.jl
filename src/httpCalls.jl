@@ -122,7 +122,7 @@ function doHTTPCall(apiEndpoint::String; queryParams::Vector{Pair{String, String
     ## 500 - An error message indicating there was an unexpected server error.
     ## 503 - An error message indicating there is a temporary problem responding.
     ##
-    ## The Ameritrade API can return "NaN" for a number, which is not valid JSON, so replace it.
+    ## The Ameritrade API can return "NaN" for a number, which is not valid JSON, so replace it with null.
     result.status == 200 ? Ok(replace(String(result.body), "\"NaN\"" => "null")) : Err(string(result.status, "::", HTTP.statustext(result.status)))
                                                              
 end

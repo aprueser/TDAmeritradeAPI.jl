@@ -10,24 +10,25 @@ function loadSampleJSON(type::String)::Result{String, String}
 
     filename::Union{Nothing, String} = nothing;
 
-    @time if type == "priceHistory" 
+    if type == "priceHistory" 
         filename = "./sample/pricehistory.json"
     end
 
-    isnothing(filename) ? nothing : read("./sample/pricehistory.json", String)
+    isnothing(filename) ? Err(nothing) : Ok(read(filename, String))
 end
 
-function parsePriceHistoryToStuct()
-    @time cl = TDAmeritradeAPI._jsonToCandleList(loadSampleJSON("priceHistory"))
+function parsePriceHistoryToStuct()::Option{TDAmeritradeAPI.CandleList}
+    TDAmeritradeAPI.priceHistoryToCandleListStruct(ErrorTypes.@?(loadSampleJSON("priceHistory")))
 end
 
-@testset "TDAmeritradeAPI.PriceHistory" begin
-    @test expect(TDAmeritradeAPI._getPriceHistory("SPY", apiKey, numPeriods=1), "ERROR") != "ERROR"                                  skip = false
-    @test expect(TDAmeritradeAPI.api_getPriceHistoryRaw("SPY", apiKey, numPeriods=1), "ERROR") != "ERROR"                            skip = false
-    @test expect_error(TDAmeritradeAPI.api_getPriceHistoryRaw("SPY", badKey, numPeriods=1), "PASS") == "500::Internal Server Error"  skip = false
+@testset verbose = true showtiming = true "TDAmeritradeAPI.PriceHistory" begin
+    @test expect(TDAmeritradeAPI._getPriceHistory("SPY", apiKey, numPeriods=1), "ERROR") != "ERROR"                                     skip = false
+    
+    @test expect(TDAmeritradeAPI.api_getPriceHistoryAsJSON("SPY", apiKey, numPeriods=1), "ERROR") != "ERROR"                            skip = true
+    @test expect_error(TDAmeritradeAPI.api_getPriceHistoryAsJSON("SPY", badKey, numPeriods=1), "PASS") == "500::Internal Server Error"  skip = true
+    
+    @test expect(TDAmeritradeAPI.api_getPriceHistoryAsDataFrame("SPY", apiKey, numPeriods=1), "ERROR") != "ERROR"                       skip = true
 
-    @test expect(TDAmeritradeAPI.api_getPriceHistoryDF("SPY", apiKey, numPeriods=1), "ERROR") != "ERROR"                                  skip = false
-
-    @test parsePriceHistoryToStuct() isa Result{TDAmeritradeAPI.CandleList}
+    @test ErrorTypes.@?(parsePriceHistoryToStuct()) isa TDAmeritradeAPI.CandleList
 
 end
