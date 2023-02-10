@@ -109,7 +109,7 @@ end
 function _priceHistoryJSONToTimeArray(rawJSON::String)::ErrorTypes.Option{TimeSeries.TimeArray}
     cl::CandleList = ErrorTypes.@?(priceHistoryToCandleListStruct(rawJSON))
 
-    fields = Vector{String}(["Open", "High", "Low", "Close", "Volume"]);
+    fields = Symbol.(["Open", "High", "Low", "Close", "Volume"]); 
     index  = map(x -> fromUnix2Date.(x.datetime), cl.candles)
     values = Array{Float64}(reduce(hcat, map(x -> [x.open, x.high, x.low, x.close, x.volume], cl.candles))');
 

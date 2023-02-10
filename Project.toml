@@ -1,7 +1,7 @@
 name = "TDAmeritradeAPI"
 uuid = "c324db79-5286-4ae5-81de-7966373ec7a4"
 authors = ["Andrew Prueser <aprueser@gmail.com>"]
-version = "0.5.6"
+version = "0.5.7"
 
 [deps]
 ArgCheck = "dce04be8-c92d-5529-be00-80e4d2c0e197"

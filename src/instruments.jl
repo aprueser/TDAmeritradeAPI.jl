@@ -175,14 +175,14 @@ function api_getInstrumentAsDataFrame(cusip::String, apiKeys::TDAmeritradeAPI.ap
 
     httpRet = _getInstrument(cusip, apiKeys);
 
-   _instrumentToDataFrame(ErrorTypes.@?(httpRet), "array")
+   _instrumentJSONToDataFrame(ErrorTypes.@?(httpRet), "array")
 end
 
 function api_searchInstrumentsAsDataFrame(symbol::String, projection::String, apiKeys::TDAmeritradeAPI.apiKeys)::ErrorTypes.Option{DataFrame}
 
     httpRet = _searchInstruments(symbol, projection, apiKeys)
 
-   _instrumentToDataFrame(ErrorTypes.@?(httpRet), "dict")
+   _instrumentJSONToDataFrame(ErrorTypes.@?(httpRet), "dict")
 end
 
 ###############################################################################
@@ -215,5 +215,5 @@ end
 function parseInstrumentsJSONToDataFrame(json_string::String, api_call::String)::ErrorTypes.Option{DataFrame}
     @argcheck api_call in ["get", "search"]
     
-    _instrumentToDataFrame(json_string, api_call == "get" ? "array" : "dict")
+    _instrumentJSONToDataFrame(json_string, api_call == "get" ? "array" : "dict")
 end
