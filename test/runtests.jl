@@ -92,6 +92,8 @@ end
         @test ErrorTypes.@?(TDAmeritradeAPI._marketHoursJSONToDataFrame(ErrorTypes.@?(loadSampleJSON("marketHoursEquity")))) isa DataFrame
         @test ErrorTypes.@?(TDAmeritradeAPI._marketHoursJSONToDataFrame(ErrorTypes.@?(loadSampleJSON("marketHoursForex")))) isa DataFrame
         @test ErrorTypes.@?(TDAmeritradeAPI._marketHoursJSONToDataFrame(ErrorTypes.@?(loadSampleJSON("marketHoursOption")))) isa DataFrame
+
+        @test ErrorTypes.@?(TDAmeritradeAPI.parseMarketHoursJSONToDataFrame(ErrorTypes.@?(loadSampleJSON("marketHoursAll")))) isa DataFrame
     end
 
     @testset "To JSON" begin
@@ -109,6 +111,8 @@ end
 
     @testset "To DataFrame" begin
         @test ErrorTypes.@?(TDAmeritradeAPI._moversJSONToDataFrame(ErrorTypes.@?(loadSampleJSON("movers")))) isa DataFrame
+
+        @test ErrorTypes.@?(TDAmeritradeAPI.parseMoversJSONToDataFrame(ErrorTypes.@?(loadSampleJSON("movers")))) isa DataFrame
     end
 
     @testset "To JSON" begin
@@ -123,6 +127,8 @@ end
 
     @testset "To DataFrame" begin
         @test ErrorTypes.@?(TDAmeritradeAPI._optionChainJSONToDataFrame(ErrorTypes.@?(loadSampleJSON("optionChainEquity")))) isa DataFrame
+
+        @test ErrorTypes.@?(TDAmeritradeAPI.parseOptionChainJSONToDataFrame(ErrorTypes.@?(loadSampleJSON("optionChainEquity")))) isa DataFrame
     end
 
     @testset "To JSON" begin
@@ -132,12 +138,13 @@ end
 
 @testset verbose = true "TDAmeritradeAPI.PriceHistory" begin
     @testset "HTTP Calls" begin
-        @test expect(TDAmeritradeAPI._getPriceHistory("SPY", apiKey, numPeriods=1), "ERROR") != "ERROR"                                     skip = false
+        @test expect(TDAmeritradeAPI._getPriceHistory("SPY", apiKey, numPeriods=1), "ERROR") != "ERROR"                                     skip = true
     
-        @test expect(TDAmeritradeAPI.api_getPriceHistoryAsJSON("SPY", apiKey, numPeriods=1), "ERROR") != "ERROR"                            skip = false
-        @test expect_error(TDAmeritradeAPI.api_getPriceHistoryAsJSON("SPY", badKey, numPeriods=1), "PASS") == "500::Internal Server Error"  skip = false
+        @test expect(TDAmeritradeAPI.api_getPriceHistoryAsJSON("SPY", apiKey, numPeriods=1), "ERROR") != "ERROR"                            skip = true
+        @test expect_error(TDAmeritradeAPI.api_getPriceHistoryAsJSON("SPY", badKey, numPeriods=1), "PASS") == "500::Internal Server Error"  skip = true
     
-        @test expect(TDAmeritradeAPI.api_getPriceHistoryAsDataFrame("SPY", apiKey, numPeriods=1), "ERROR") != "ERROR"                       skip = false
+        @test expect(TDAmeritradeAPI.api_getPriceHistoryAsDataFrame("SPY", apiKey, numPeriods=1), "ERROR") != "ERROR"                       skip = true
+        @test expect(TDAmeritradeAPI.api_getPriceHistoryAsTimeArray("SPY", apiKey, numPeriods=1), "ERROR") != "ERROR"                       skip = true
     end
 
     @testset "To Structs" begin
@@ -184,6 +191,8 @@ end
         @test ErrorTypes.@?(TDAmeritradeAPI._quotesJSONToDataFrame(ErrorTypes.@?(loadSampleJSON("quotesSingleEquityOption")))) isa DataFrame
         @test ErrorTypes.@?(TDAmeritradeAPI._quotesJSONToDataFrame(ErrorTypes.@?(loadSampleJSON("quotesSingleETF")))) isa DataFrame
         @test ErrorTypes.@?(TDAmeritradeAPI._quotesJSONToDataFrame(ErrorTypes.@?(loadSampleJSON("quotesSymNotFound")))) isa DataFrame
+
+        @test ErrorTypes.@?(TDAmeritradeAPI.parseQuotesJSONToDataFrame(ErrorTypes.@?(loadSampleJSON("quotesMultiMix")))) isa DataFrame
     end
 
     @testset "To JSON" begin
@@ -198,4 +207,8 @@ end
         @test ErrorTypes.@?(TDAmeritradeAPI.quotesToJSON(ErrorTypes.@?(TDAmeritradeAPI.quotesToQuoteStruct(ErrorTypes.@?(loadSampleJSON("quotesSingleETF")))))) isa String
         @test ErrorTypes.@?(TDAmeritradeAPI.quotesToJSON(ErrorTypes.@?(TDAmeritradeAPI.quotesToQuoteStruct(ErrorTypes.@?(loadSampleJSON("quotesSymNotFound")))))) isa String
     end
+end
+
+@testset verbose = true "TDAmeritradeAPI.Endpoints" begin
+        @test TDAmeritradeAPI.listEndpoints()["get_quote"]["uri"] == "marketdata/{symbol}/quotes"
 end
