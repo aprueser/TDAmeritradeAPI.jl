@@ -9,7 +9,7 @@ Julia implementation of the TD Ameritrade API.  This package provides convinienc
 
 API Defintion, and basic guides can be found at: https://developer.tdameritrade.com/apis
 
-All API calls utilize the ErrorTypes for safe error handling. (https://juliahub.com/ui/Packages/ErrorTypes/VQlfN/0.5.1)
+All API calls utilize the [ErrorTypes](https://juliahub.com/ui/Packages/ErrorTypes/VQlfN/) for safe error handling. 
 
 ## Installation
 ```Julia
