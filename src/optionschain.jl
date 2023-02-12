@@ -284,7 +284,7 @@ function api_getOptionChainAsDataFrame(symbol::String, apiKeys::TDAmeritradeAPI.
     httpRet = _getOptionChain(symbol, apiKeys, contractType = contractType, strikeCount = strikeCount, includeQuotes = includeQuotes, strategy = strategy, interval = interval,
                                                   strike = strike, range = range, fromDate = fromDate, toDate = toDate, expMonth = expMonth, optionType = optionType);
 
-     _optionChainToDataFrame(ErrorTypes.@?(httpRet))
+     _optionChainJSONToDataFrame(ErrorTypes.@?(httpRet))
 end
 
 ###############################################################################
@@ -302,7 +302,7 @@ end
 ##
 ###############################################################################
 function optionChainToJSON(oc::OptionChain)::ErrorTypes.Option{String}
-    some(JSON3.write(cl))
+    some(JSON3.write(oc))
 end
 
 ################################################################################
@@ -313,5 +313,5 @@ end
 ##
 ################################################################################
 function parseOptionChainJSONToDataFrame(json_string::String)::ErrorTypes.Option{DataFrame}
-    _optionChainToDataFrame(json_string)
+    _optionChainJSONToDataFrame(json_string)
 end

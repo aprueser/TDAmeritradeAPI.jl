@@ -179,7 +179,7 @@ function api_getMarketHoursAsDataFrame(market::String, apiKeys::apiKeys, marketD
 
     httpRet = _getMarketHours(market, apiKeys, marketDate);
 
-    _marketHoursToDataFrame(ErrorTypes.@?(httpRet))
+    _marketHoursJSONToDataFrame(ErrorTypes.@?(httpRet))
 end
 
 function api_getMarketHoursAsDataFrame(markets::Vector{String}, apiKeys::apiKeys, marketDate::Date=Dates.dayofweek(today()) >= 6 ? today() + Dates.Day(8-Dates.dayofweek(today())) : today())::ErrorTypes.Option{DataFrame}
@@ -188,7 +188,7 @@ function api_getMarketHoursAsDataFrame(markets::Vector{String}, apiKeys::apiKeys
     
     httpRet = _getMarketHours(markets, apiKeys, marketDate);
 
-    _marketHoursToDataFrame(ErrorTypes.@?(httpRet))
+    _marketHoursJSONToDataFrame(ErrorTypes.@?(httpRet))
 end
 
 ###############################################################################
@@ -215,5 +215,5 @@ end
 ##
 ################################################################################
 function parseMarketHoursJSONToDataFrame(json_string::String)::ErrorTypes.Option{DataFrame}
-    _marketHoursToDataFrame(json_string)
+    _marketHoursJSONToDataFrame(json_string)
 end

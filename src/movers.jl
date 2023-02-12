@@ -91,8 +91,7 @@ function api_getMoversAsDataFrame(index::String, direction::String, change::Stri
 
     httpRet = _getMovers(index, direction, change, apiKeys);
 
-    _moversToDataFrame(ErrorTypes.@?(httpRet))
-
+    _moversJSONToDataFrame(ErrorTypes.@?(httpRet))
 end
 
 ###############################################################################
@@ -114,6 +113,6 @@ function moversToJSON(m::Movers)::ErrorTypes.Option{String}
 end
 
 function parseMoversJSONToDataFrame(json_string::String)::ErrorTypes.Option{DataFrame}
-    _moversToDataFrame(json_string)
+    _moversJSONToDataFrame(json_string)
 end
 
