@@ -21,4 +21,6 @@ makedocs(;
 deploydocs(;
     repo="github.com/aprueser/TDAmeritradeAPI.jl",
     devbranch="main",
+    devurl="dev",
+    versions=["stable" => "v^", "v#.#", "dev" => "dev"]
 )

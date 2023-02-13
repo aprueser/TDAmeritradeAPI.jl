@@ -68,14 +68,14 @@ endpoints = Dict{String, Dict{String, String}}(
 
 Return a Dict of all valid TDAmeritrade API endpoints where 
 ```julia
-endpoint_name => {"uri", "http_method"}
+endpoint_name => {"uri", "type"}
 ```
 
 # Example
 ```julia
 listEndpoints()
 Dict{String, Dict{String, String}} with 37 entries:
-  "get_quotes"                            => Dict("uri"=>"marketdata/quotes", "type"=>"GET")
+  "get_quotes" => Dict("uri"=>"marketdata/quotes", "type"=>"GET")
 ```
 """
 function listEndpoints()::Dict{String, Dict{String, String}}
