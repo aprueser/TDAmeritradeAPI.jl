@@ -3,8 +3,8 @@ using Test
 using Dates, ErrorTypes, JSON3, DataFrames, TimeSeries
 
 ## Enter your TDAmeritrade API key here for local testing, remove before committing
-apiKey = TDAmeritradeAPI.apiKeys("WJVM0PUSEA6DOJSBG3LNR14UIX5CVMAO", "", now(), "", now(), now() - Minute(30), "unauthorized");
-badKey = TDAmeritradeAPI.apiKeys("WJVMPSADJB3NR14UIX5CVMAO", "", now(), "", now(), now() - Minute(30), "unauthorized");
+apiKey = TDAmeritradeAPI.apiKeys(ENV["TDA_CUST_KEY"], "", now(), "", now(), now() - Minute(30), "unauthorized");
+badKey = TDAmeritradeAPI.apiKeys(ENV["TDA_BAD_KEY"], "", now(), "", now(), now() - Minute(30), "unauthorized");
 
 function loadSampleJSON(type::String)::Result{String, String}
 
@@ -211,4 +211,5 @@ end
 
 @testset verbose = true "TDAmeritradeAPI.Endpoints" begin
         @test TDAmeritradeAPI.listEndpoints()["get_quote"]["uri"] == "marketdata/{symbol}/quotes"
+        @test badKey.custKey == "BADKEY123ABCZYX"
 end

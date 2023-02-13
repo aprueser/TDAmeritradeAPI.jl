@@ -63,6 +63,21 @@ endpoints = Dict{String, Dict{String, String}}(
     "update_watchlist"                     => Dict("uri" => "accounts/{accountId}/watchlists/{watchlistId}", "type" => "PATCH")
 )
 
+"""
+   listEndpoints()::Dict{String, Dict{String, String}}
+
+Return a Dict of all valid TDAmeritrade API endpoints where 
+```julia
+endpoint_name => {"uri", "http_method"}
+```
+
+# Example
+```julia
+listEndpoints()
+Dict{String, Dict{String, String}} with 37 entries:
+  "get_quotes"                            => Dict("uri"=>"marketdata/quotes", "type"=>"GET")
+```
+"""
 function listEndpoints()::Dict{String, Dict{String, String}}
     return(endpoints)
 end

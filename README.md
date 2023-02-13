@@ -1,6 +1,6 @@
 # TDAmeritradeAPI
 
-[![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://aprueser.github.io/TDAmeritradeAPI.jl/docs)
+[![Dev](https://img.shields.io/badge/docs-stable-blue.svg)](https://aprueser.github.io/TDAmeritradeAPI.jl/dev)
 ![CI](https://github.com/aprueser/TDAmeritradeAPI.jl/workflows/CI/badge.svg)
 [![Coverage](https://codecov.io/gh/aprueser/TDAmeritradeAPI.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/aprueser/TDAmeritradeAPI.jl)
 
