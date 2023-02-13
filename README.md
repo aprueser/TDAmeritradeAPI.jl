@@ -31,7 +31,7 @@ jsonQQQ = ErrorTypes.@?(TDAmeritradeAPI.api_getPriceHistoryAsJSON("QQQ", keys))
 
 Every method also has a AsDataFrame version that will parse the JSON and return a DataFrame
 ```Julia
-dfQQQ = TDAmeritradeAPI.api_getPriceHistoryAsJSON("QQQ", keys)
+dfQQQ = ErrorTypes.@?(TDAmeritradeAPI.api_getPriceHistoryAsJSON("QQQ", keys))
 ```
 
 The Price History API additionally provides an function that returns a TimeSeries.TimeArray: api_getPriceHistoryAsTimeArray
