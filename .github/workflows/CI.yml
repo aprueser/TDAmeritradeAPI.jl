@@ -34,7 +34,7 @@ jobs:
       - uses: julia-actions/julia-buildpkg@v1
       - uses: julia-actions/julia-runtest@v1
         env:
-          TDA_CUST_KEY: ${{ secret.TD_CUST_KEY }} 
+          TDA_CUST_KEY: ${{ secrets.TD_CUST_KEY }} 
           TDA_BAD_KEY: "BADKEY123ABCZYX"
       - uses: julia-actions/julia-processcoverage@v1
       - uses: codecov/codecov-action@v3
