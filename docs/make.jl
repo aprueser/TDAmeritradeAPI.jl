@@ -9,6 +9,7 @@ makedocs(;
     sitename="TDAmeritradeAPI.jl",
     modules=[TDAmeritradeAPI],
     authors="Andrew Prueser <aprueser@gmail.com> and contributors",
+    repo="https://github.com/aprueser/TDAmeritradeAPI.jl/blob/{commit}{path}#{line}",
     format=Documenter.HTML(;
         edit_link="main",
         prettyurls=get(ENV, "CI", "false") == "true",

@@ -285,7 +285,7 @@ end
                             optionType::String = "ALL"
                            )::ErrorTypes.Option{DataFrame}
 
-Make the TDAmeritradeAPI call to the get_option_chain endpoint, and return the raw JSON.
+Make the TDAmeritradeAPI call to the get\\_option\\_chain endpoint, and return the raw JSON.
 
 An ErrorTypes.jl Option object will be returned that can be evaluated with ErrorTypes.@?
 
@@ -355,12 +355,12 @@ end
                                  optionType::String = "ALL"
                                 )::ErrorTypes.Option{DataFrame}
 
-Make the TDAmeritradeAPI call to the get_option_chain endpoint, and return a DataFrame
+Make the TDAmeritradeAPI call to the get\\_option\\_chain endpoint, and return a DataFrame
 
 An ErrorTypes.jl Option object will be returned that can be evaluated with ErrorTypes.@?
 
 # Arguments
-See ['api_getOptionChainAsJSON'](@ref).
+See [`api_getOptionChainAsJSON`](@ref).
 """
 function api_getOptionChainAsDataFrame(symbol::String, apiKeys::TDAmeritradeAPI.apiKeys; 
                                        contractType::String = "ALL", strikeCount::Int64 = 25, 
@@ -387,7 +387,7 @@ end
 """
    optionChainToOptionChainStruct(json_string::String)::ErrorTypes.Option{OptionChain}
 
-Convert the JSON string returned by the TDAmeritradeAPI get_option_chain API call to an OptionChain struct.
+Convert the JSON string returned by the TDAmeritradeAPI get\\_option\\_chain API call to an OptionChain struct.
 This is largely an internal function to allow later conversions to DataFrame with proper type conversions.
 
 An ErrorTypes.jl Option object will be returned that can be evaluated with ErrorTypes.@?
@@ -438,7 +438,7 @@ end
 """
    parseOptionChainJSONToDataFrame(json_string::String)::ErrorTypes.Option{DataFrame}
 
-Convert the JSON string returned by the TDAmeritradeAPI get_option_chain API call to a DataFrame.
+Convert the JSON string returned by the TDAmeritradeAPI get\\_option\\_chain API call to a DataFrame.
 The put and call maps will be appended into a single DataFrame, with the PUT rows coming first.
 Nested JSON objects will be flattened into columns in the output DataFrame.
 
