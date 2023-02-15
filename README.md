@@ -31,10 +31,14 @@ jsonQQQ = ErrorTypes.@?(TDAmeritradeAPI.api_getPriceHistoryAsJSON("QQQ", keys))
 
 Every method also has a AsDataFrame version that will parse the JSON and return a DataFrame
 ```Julia
-dfQQQ = ErrorTypes.@?(TDAmeritradeAPI.api_getPriceHistoryAsJSON("QQQ", keys))
+dfQQQ = ErrorTypes.@?(TDAmeritradeAPI.api_getPriceHistoryAsDataFrame("QQQ", keys))
 ```
 
 The Price History API additionally provides an function that returns a TimeSeries.TimeArray: api_getPriceHistoryAsTimeArray
+
+In common usage one would call the api_ AsDataFrame function(s) to fetch and format the data in a single call.  
+If fetching a lot of data, it can be advantageous to call the AsJSON function followed by the parse JSONToDataFrame function 
+in a sperate thread to not tie up a fetch loop with the DataFrame parsing overhead.
 
 ## Ticker Symbol support
 Any API call that uses the symbol as part of the URL will not support FUTURES, FOREX, or INDEX symbols with a / or $ in the symbol.  

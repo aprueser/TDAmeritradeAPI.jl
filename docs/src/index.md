@@ -68,3 +68,8 @@ Additional API that require Authentication that I will focus on implementing in 
 + User Info and Preferences
 + Watchlists
 + WebSocket Streaming Data (Allows access to real-time streaming data, as well as OHLC data for FOREX, and FUTURES not supported by the Price History API)
+
+All defined API endpoints can be seen by calling the listEndpoints() function:
+```@docs
+listEndpoints
+```

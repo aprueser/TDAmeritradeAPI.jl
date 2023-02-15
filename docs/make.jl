@@ -1,20 +1,23 @@
+push!(LOAD_PATH, "../src/")
+
 using TDAmeritradeAPI
 using Documenter
 
 DocMeta.setdocmeta!(TDAmeritradeAPI, :DocTestSetup, :(using TDAmeritradeAPI); recursive=true)
 
 makedocs(;
+    sitename="TDAmeritradeAPI.jl",
     modules=[TDAmeritradeAPI],
     authors="Andrew Prueser <aprueser@gmail.com> and contributors",
-    repo="https://github.com/aprueser/TDAmeritradeAPI.jl/blob/{commit}{path}#{line}",
-    sitename="TDAmeritradeAPI.jl",
     format=Documenter.HTML(;
+        edit_link="main",
         prettyurls=get(ENV, "CI", "false") == "true",
         canonical="https://aprueser.github.io/TDAmeritradeAPI.jl",
         assets=String[],
     ),
     pages=[
-        "Home" => "index.md",
+        "Documentation" => "index.md",
+        "Option Chain" => "optionChain.md",
     ],
 )
 

@@ -5,9 +5,11 @@
 ##
 ################################################################################
 validContractType = ["CALL", "PUT", "ALL"];
-validStrategy     = ["SINGLE", "COVERED", "VERTICAL", "CALENDAR", "STRANGLE", "STRADDLE", "BUTTERFLY", "CONDOR", "DIAGONAL", "COLLAR", "ROLL"];
+validStrategy     = ["SINGLE", "COVERED", "VERTICAL", "CALENDAR", "STRANGLE", "STRADDLE", 
+                     "BUTTERFLY", "CONDOR", "DIAGONAL", "COLLAR", "ROLL"];
 validRange        = ["ITM", "NTM", "OTM", "SAK", "SBK", "SNK", "ALL"];
-validExpMonth     = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC", "ALL"]
+validExpMonth     = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", 
+                     "NOV", "DEC", "ALL"]
 validOptionType   = ["S", "NS", "ALL"]
 
 ################################################################################
@@ -191,9 +193,14 @@ optionChainHTTPErrorMsg = Dict{Int64, String}(
 ##    SNK: Strikes Near Market
 ##    ALL: All Strikes
 ###############################################################
-function _getOptionChain(symbol::String, apiKeys::TDAmeritradeAPI.apiKeys; contractType::String = "ALL", strikeCount::Int64 = 25, includeQuotes::Bool = false, strategy::String = "SINGLE", interval::Int64 = 10,
-                         strike::Union{Float64, Nothing} = nothing, range::String = "ALL", fromDate::Date = today(), toDate::Union{Date, Nothing} = nothing, expMonth::String = "ALL",
-                         optionType::String = "ALL")::ErrorTypes.Result{String, String}
+function _getOptionChain(symbol::String, apiKeys::TDAmeritradeAPI.apiKeys; 
+                         contractType::String = "ALL", strikeCount::Int64 = 25, 
+                         includeQuotes::Bool = false, strategy::String = "SINGLE", 
+                         interval::Int64 = 10, strike::Union{Float64, Nothing} = nothing, 
+                         range::String = "ALL", fromDate::Date = today(), 
+                         toDate::Union{Date, Nothing} = nothing, expMonth::String = "ALL",
+                         optionType::String = "ALL"
+                        )::ErrorTypes.Result{String, String}
         @argcheck length(symbol) > 0
         @argcheck uppercase(contractType) in validContractType
         @argcheck strikeCount > 0
@@ -236,14 +243,18 @@ end
 function _optionChainJSONToDataFrame(rawJSON::String)::ErrorTypes.Option{DataFrame}
     oc::OptionChain = ErrorTypes.@?(optionChainToOptionChainStruct(rawJSON))
 
-    df::DataFrame = DataFrame(vcat(oc.putExpDateMap.dateMap, oc.callExpDateMap.dateMap), copycols = false);
+    df::DataFrame = DataFrame(vcat(oc.putExpDateMap.dateMap, oc.callExpDateMap.dateMap), 
+                              copycols = false);
 
-    DataFrames.insertcols!(df, 1, :Status => oc.status, :Underlying => HTTP.unescapeuri(oc.symbol), :UnderlyingPrice => oc.underlyingPrice)
+    DataFrames.insertcols!(df, 1, :Status => oc.status, 
+                                  :Underlying => HTTP.unescapeuri(oc.symbol), 
+                                  :UnderlyingPrice => oc.underlyingPrice)
 
     if !isnothing(oc.underlying)
         underlyingDF = singleSturctToDataFrame(oc.underlying)
 
-        df = DataFrames.innerjoin(df, underlyingDF, on = :Underlying => :symbol, makeunique = true, renamecols = "" => "_underlying");
+        df = DataFrames.innerjoin(df, underlyingDF, on = :Underlying => :symbol, makeunique = true, 
+                                  renamecols = "" => "_underlying");
 
         transform!(df, :quoteTime_underlying .=> fromUnix2Date .=> :quoteTime_underlying)
         transform!(df, :tradeTime_underlying .=> fromUnix2Date .=> :tradeTime_underlying)
@@ -264,12 +275,69 @@ end
 ##  Option Chain - Function signiatures to return the JSON return as a String
 ##
 ###############################################################################
-function api_getOptionChainAsJSON(symbol::String, apiKeys::TDAmeritradeAPI.apiKeys; contractType::String = "ALL", strikeCount::Int64 = 25, includeQuotes::Bool = false, strategy::String = "SINGLE", interval::Int64 = 10,
-                               strike::Union{Float64, Nothing} = nothing, range::String = "ALL", fromDate::Date = today(), toDate::Union{Date, Nothing} = nothing, expMonth::String = "ALL",
-                               optionType::String = "ALL")::ErrorTypes.Result{String, String}
+"""
+   api_getOptionChainAsJSON(symbol::String, apiKeys::TDAmeritradeAPI.apiKeys; 
+                            contractType::String = "ALL", strikeCount::Int64 = 25, 
+                            includeQuotes::Bool = false, strategy::String = "SINGLE", 
+                            interval::Int64 = 10, strike::Union{Float64, Nothing} = nothing, 
+                            range::String = "ALL", fromDate::Date = today(), 
+                            toDate::Union{Date, Nothing} = nothing, expMonth::String = "ALL", 
+                            optionType::String = "ALL"
+                           )::ErrorTypes.Option{DataFrame}
 
-    _getOptionChain(symbol, apiKeys, contractType = contractType, strikeCount = strikeCount, includeQuotes = includeQuotes, strategy = strategy, interval = interval,
-                                            strike = strike, range = range, fromDate = fromDate, toDate = toDate, expMonth = expMonth, optionType = optionType);
+Make the TDAmeritradeAPI call to the get_option_chain endpoint, and return the raw JSON.
+
+An ErrorTypes.jl Option object will be returned that can be evaluated with ErrorTypes.@?
+
+# Arguments
+- `symbol::String`: the underlying stock symbol to fetch the Option Chain for.
+- `apiKeys::TDAmeritradeAPI.apiKeys`: the apiKeys object containing the CUST_KEY, access
+    and refresh tokens.
+
+# Keywords
+- `contractType::String = "ALL"`: Type of contracts to return in the chain. Can be CALL, PUT, or ALL. 
+- `strikeCount::Int64 = 25`: The number of strikes to return above and below the at-the-money price.
+- `includeQuotes::Bool = false`: Include quotes for options in the option chain. Can be TRUE or FALSE. 
+- `strategy::String = "SINGLE"`: Passing a value returns a Strategy Chain. Possible values are SINGLE, 
+    COVERED, VERTICAL, CALENDAR, STRANGLE, STRADDLE, BUTTERFLY, CONDOR, DIAGONAL, COLLAR, or ROLL
+- `interval::Int64 = 10`: Strike interval for spread strategy chains
+- `strike::Union{Float64, Nothing} = nothing`: Provide a strike price to return options only at that 
+    strike price.
+- `range::String = "ALL"`: Returns options for the given range. Possible values are:
+    ITM: In-the-money
+    NTM: Near-the-money
+    OTM: Out-of-the-money
+    SAK: Strikes Above Market
+    SBK: Strikes Below Market
+    SNK: Strikes Near Market
+    ALL: All Strikes
+- `fromDate::Date = today()`: Only return expirations after this date. For strategies, expiration refers 
+    to the nearest term expiration in the strategy. 
+    Valid ISO-8601 formats are: yyyy-MM-dd and yyyy-MM-dd'T'HH:mm:ssz.'
+- `toDate::Union{Date, Nothing} = nothing`: Only return expirations before this date. For strategies, 
+    expiration refers to the nearest term expiration in the strategy. 
+    Valid ISO-8601 formats are: yyyy-MM-dd and yyyy-MM-dd'T'HH:mm:ssz.'
+- `expMonth::String = "ALL"`: Return only options expiring in the specified month. 
+    Month is given in the three character format. Example: JAN
+- `optionType::String = "ALL"`: Type of contracts to return. Possible values are:
+    S: Standard contracts
+    NS: Non-standard contracts
+    ALL: All contracts
+
+"""
+function api_getOptionChainAsJSON(symbol::String, apiKeys::TDAmeritradeAPI.apiKeys; 
+                                  contractType::String = "ALL", strikeCount::Int64 = 25, 
+                                  includeQuotes::Bool = false, strategy::String = "SINGLE", 
+                                  interval::Int64 = 10, strike::Union{Float64, Nothing} = nothing, 
+                                  range::String = "ALL", fromDate::Date = today(), 
+                                  toDate::Union{Date, Nothing} = nothing, expMonth::String = "ALL", 
+                                  optionType::String = "ALL"
+                                 )::ErrorTypes.Result{String, String}
+
+    _getOptionChain(symbol, apiKeys, contractType = contractType, strikeCount = strikeCount, 
+                    includeQuotes = includeQuotes, strategy = strategy, interval = interval,
+                    strike = strike, range = range, fromDate = fromDate, toDate = toDate, 
+                    expMonth = expMonth, optionType = optionType);
 end
 
 ###############################################################################
@@ -277,12 +345,36 @@ end
 ##  Option Chain - Function signiatures to return DataFrames
 ##
 ###############################################################################
-function api_getOptionChainAsDataFrame(symbol::String, apiKeys::TDAmeritradeAPI.apiKeys; contractType::String = "ALL", strikeCount::Int64 = 25, includeQuotes::Bool = false, strategy::String = "SINGLE", interval::Int64 = 10,
-                              strike::Union{Float64, Nothing} = nothing, range::String = "ALL", fromDate::Date = today(), toDate::Union{Date, Nothing} = nothing, expMonth::String = "ALL",
-                              optionType::String = "ALL")::ErrorTypes.Option{DataFrame}
+"""
+   api_getOptionChainAsDataFrame(symbol::String, apiKeys::TDAmeritradeAPI.apiKeys; 
+                                 contractType::String = "ALL", strikeCount::Int64 = 25, 
+                                 includeQuotes::Bool = false, strategy::String = "SINGLE", 
+                                 interval::Int64 = 10, strike::Union{Float64, Nothing} = nothing, 
+                                 range::String = "ALL", fromDate::Date = today(), 
+                                 toDate::Union{Date, Nothing} = nothing, expMonth::String = "ALL", 
+                                 optionType::String = "ALL"
+                                )::ErrorTypes.Option{DataFrame}
 
-    httpRet = _getOptionChain(symbol, apiKeys, contractType = contractType, strikeCount = strikeCount, includeQuotes = includeQuotes, strategy = strategy, interval = interval,
-                                                  strike = strike, range = range, fromDate = fromDate, toDate = toDate, expMonth = expMonth, optionType = optionType);
+Make the TDAmeritradeAPI call to the get_option_chain endpoint, and return a DataFrame
+
+An ErrorTypes.jl Option object will be returned that can be evaluated with ErrorTypes.@?
+
+# Arguments
+See ['api_getOptionChainAsJSON'](@ref).
+"""
+function api_getOptionChainAsDataFrame(symbol::String, apiKeys::TDAmeritradeAPI.apiKeys; 
+                                       contractType::String = "ALL", strikeCount::Int64 = 25, 
+                                       includeQuotes::Bool = false, strategy::String = "SINGLE", 
+                                       interval::Int64 = 10, strike::Union{Float64, Nothing} = nothing, 
+                                       range::String = "ALL", fromDate::Date = today(),
+                                       toDate::Union{Date, Nothing} = nothing, expMonth::String = "ALL",
+                                       optionType::String = "ALL"
+                                      )::ErrorTypes.Option{DataFrame}
+
+    httpRet = _getOptionChain(symbol, apiKeys, contractType = contractType, strikeCount = strikeCount, 
+                              includeQuotes = includeQuotes, strategy = strategy, interval = interval,
+                              strike = strike, range = range, fromDate = fromDate, toDate = toDate, 
+                              expMonth = expMonth, optionType = optionType);
 
      _optionChainJSONToDataFrame(ErrorTypes.@?(httpRet))
 end
@@ -292,6 +384,21 @@ end
 ##  Convert JSON to Struct
 ##
 ###############################################################################
+"""
+   optionChainToOptionChainStruct(json_string::String)::ErrorTypes.Option{OptionChain}
+
+Convert the JSON string returned by the TDAmeritradeAPI get_option_chain API call to an OptionChain struct.
+This is largely an internal function to allow later conversions to DataFrame with proper type conversions.
+
+An ErrorTypes.jl Option object will be returned that can be evaluated with ErrorTypes.@?
+
+# Example
+```julia
+optionChainToOptionChainStruct(js)
+some(TDAmeritradeAPI.OptionChain("NET", "SUCCESS", nothing, "SINGLE", 0.0, true, false, 0.1,
+[...]
+```
+"""
 function optionChainToOptionChainStruct(json_string::String)::ErrorTypes.Option{OptionChain}
     some(JSON3.read(json_string, OptionChain))
 end
@@ -301,6 +408,22 @@ end
 ##  Convert Struct to JSON
 ##
 ###############################################################################
+"""
+   optionChainToJSON(oc::OptionChain)::ErrorTypes.Option{String}
+
+Convert an OptionChain struct oc to a JSON object.
+
+An ErrorTypes.jl Option object will be returned that can be evaluated with ErrorTypes.@?
+
+The returned JSON will not be in the same format as the initial return from the TDAmeritradeAPI call.
+
+# Example
+```julia
+TDAmeritradeAPI.optionChainToJSON(oc)
+some("{\"symbol\":\"NET\",\"status\":\"SUCCESS\",\"underlying\":null,\"strategy\":\"SINGLE\" 
+[...]
+```
+"""
 function optionChainToJSON(oc::OptionChain)::ErrorTypes.Option{String}
     some(JSON3.write(oc))
 end
@@ -312,6 +435,23 @@ end
 ##  Note: The OptionsDeliverableList is not converted into the DataFrame
 ##
 ################################################################################
+"""
+   parseOptionChainJSONToDataFrame(json_string::String)::ErrorTypes.Option{DataFrame}
+
+Convert the JSON string returned by the TDAmeritradeAPI get_option_chain API call to a DataFrame.
+The put and call maps will be appended into a single DataFrame, with the PUT rows coming first.
+Nested JSON objects will be flattened into columns in the output DataFrame.
+
+An ErrorTypes.jl Option object will be returned that can be evaluated with ErrorTypes.@?
+
+# Example
+```julia
+parseOptionChainJSONToDataFrame(js)
+some(596x52 DataFrame
+ Row | Status  Underlying UnderlyingPrice putCall symbol description exchangeName bid ask
+[...]
+```
+"""
 function parseOptionChainJSONToDataFrame(json_string::String)::ErrorTypes.Option{DataFrame}
     _optionChainJSONToDataFrame(json_string)
 end
