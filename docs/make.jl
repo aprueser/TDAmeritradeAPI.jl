@@ -18,7 +18,8 @@ makedocs(;
     ),
     pages=[
         "Documentation" => "index.md",
-        "Option Chain" => "optionChain.md",
+        "Instruments"   => "instruments.md",
+        "Option Chain"  => "optionChain.md",
     ],
 )
 

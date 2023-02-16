@@ -145,11 +145,16 @@ end
 function _instrumentJSONToDataFrame(rawJSON::String, api_call::String)::ErrorTypes.Option{DataFrame}
     i::Union{InstrumentArray, InstrumentDict} = api_call == "array" ? ErrorTypes.@?(instrumentsToInstrumentArrayStruct(rawJSON)) : ErrorTypes.@?(instrumentsToInstrumentDictStruct(rawJSON))
    
-    if api_call == "array" 
-        return some(DataFrame(values(i), copycols = false))
+    df = DataFrame(values(i), copycols = false)
+
+    if df[1,:fundamental] != nothing
+       dff = DataFrame(df[!,:fundamental])
+       df = innerjoin(df, dff, on = :symbol)
     end
 
-    return some(DataFrame(values(i), copycols = false))
+    select!(df, Not(:fundamental))
+
+    return some(df)
 end
 
 
@@ -158,10 +163,68 @@ end
 ##  Instruments - Function signiatures to return the JSON return as a String
 ##
 ###############################################################################
+"""
+```julia
+   api_getInstrumentAsJSON(cusip::String, apiKeys::TDAmeritradeAPI.apiKeys)::ErrorTypes.Result{String, String}
+```
+Make the TDAmeritradeAPI call to the get\\_instrument endpoint, and return the raw JSON.
+
+An ErrorTypes.jl Option object will be returned that can be evaluated with ErrorTypes.@?
+
+# Example
+```julia
+api_getInstrumentAsJSON("NET", apiKey)
+Result{String, String}(Ok("[{\"cusip\":\"18915M107\",\"symbol\":\"NET\",\"description\":\"CLOUDFLARE INC COM CL A\",\"exchange\":\"EQY\",\"assetType\":\"EQUITY\"}]"))
+```
+"""
 function api_getInstrumentAsJSON(cusip::String, apiKeys::TDAmeritradeAPI.apiKeys)::ErrorTypes.Result{String, String}
    _getInstrument(cusip, apiKeys);
 end
 
+"""
+```julia
+   api_searchInstrumentsAsJSON(symbol::String, projection::String, apiKeys::TDAmeritradeAPI.apiKeys)::ErrorTypes.Result{String, String}
+```
+Make the TDAmeritradeAPI call to the search\\_instruments endpoint, and return the raw JSON.
+
+An ErrorTypes.jl Option object will be returned that can be evaluated with ErrorTypes.@?
+
+# Arguments
+- `projection::String`: The type of request:
+    symbol-search: Retrieve instrument data of a specific symbol or cusip
+    symbol-regex: Retrieve instrument data for all symbols matching regex. 
+     Example: symbol=XYZ.* will return all symbols beginning with XYZ
+    desc-search: Retrieve instrument data for instruments whose description contains the word supplied.
+     Example: symbol=FakeCompany will return all instruments with FakeCompany in the description.
+    desc-regex: Search description with full regex support.
+     Example: symbol=XYZ.[A-C] returns all instruments whose descriptions contain a word beginning with XYZ followed by a character A through C.
+    fundamental: Returns fundamental data for a single instrument specified by exact symbol
+
+# Example
+```julia
+api_searchInstrumentsAsJSON("NET", "symbol-search", apiKey)
+Result{String, String}(Ok("{\"NET\":{\"cusip\":\"18915M107\",\"symbol\":\"NET\",\"description\":\"Cloudflare, Inc. Class A Common Stock\",\"exchange\":\"NYSE\",\"assetType\":\"EQUITY\"}}"))
+
+api_searchInstrumentsAsJSON("NET.*", "symbol-regex", apiKey)
+Result{String, String}(Ok("{\"NET\":{\"cusip\":\"18915M107\",\"symbol\":\"NET\",\"description\":\"Cloudflare, Inc. Class A Common Stock\",\"exchange\":\"NYSE\",\"assetType\":\"EQUITY\"},
+                            \"NETTF\":{\"cusip\":\"G6427A102\",\"symbol\":\"NETTF\",\"description\":\"Netease Inc Ordinary Shares (PC)\",\"exchange\":\"Pink Sheet\",\"assetType\":\"EQUITY\"},
+[...]
+
+api_searchInstrumentsAsJSON("Cloud", "desc-search", apiKey)
+Result{String, String}(Ok("{\"18911R100\":{\"cusip\":\"18911R100\",\"symbol\":\"18911R100\",\"description\":\"CLOUD MEDICAL DOCTOR SOFTWARE\",\"exchange\":\"Unknown\",\"assetType\":\"UNKNOWN\"},
+                            \"CLGUF\":{\"cusip\":\"18913C101\",\"symbol\":\"CLGUF\",\"description\":\"CLOUD NINE WEB3 TECHNOLOGIES INC Common Shares (QB)\",\"exchange\":\"Pink Sheet\",\"assetType\":\"EQUITY\"},
+[...]
+
+api_searchInstrumentsAsJSON(".*Semiconductor.*", "desc-regex", apiKey)
+Result{String, String}(Ok("{\"AOSL\":{\"cusip\":\"G6331P104\",\"symbol\":\"AOSL\",\"description\":\"Alpha and Omega Semiconductor Limited - Common Shares\",\"exchange\":\"NASDAQ\",\"assetType\":\"EQUITY\"},
+                            \"BESIY\":{\"cusip\":\"073320103\",\"symbol\":\"BESIY\",\"description\":\"BE Semiconductor Industries NV New York Registry Shares (PC)\",\"exchange\":\"Pink Sheet\",\"assetType\":\"EQUITY\"},
+[...]
+
+api_searchInstrumentsAsJSON("NET", "fundamental", apiKey)
+Result{String, String}(Ok("{\"NET\":{\"fundamental\":{\"symbol\":\"NET\",\"high52\":132.45,\"low52\":37.37,\"dividendAmount\":0.0,\"dividendYield\":0.0,
+[...]
+```
+"""
 function api_searchInstrumentsAsJSON(symbol::String, projection::String, apiKeys::TDAmeritradeAPI.apiKeys)::ErrorTypes.Result{String, String}
     _searchInstruments(symbol, projection, apiKeys);
 end
@@ -171,18 +234,89 @@ end
 ##  Instruments - Function signiatures to return DataFrames
 ##
 ###############################################################################
+"""
+```julia
+   api_getInstrumentAsDataFrame(cusip::String, apiKeys::TDAmeritradeAPI.apiKeys)::ErrorTypes.Option{DataFrame}
+```
+Make the TDAmeritradeAPI call to the get\\_instrument endpoint, and return a DataFrame
+
+An ErrorTypes.jl Option object will be returned that can be evaluated with ErrorTypes.@?
+
+# Example
+```julia
+api_getInstrumentAsDataFrame("NET", apiKey)
+some(1x7 DataFrame
+ Row | bondPrice  cusip      symbol  description              exchange  assetType
+     | Nothing    String     String  String                   String    String   
+ --------------------------------------------------------------------------------
+   1 |            18915M107  NET     CLOUDFLARE INC COM CL A  EQY       EQUITY)
+
+```
+
+See Also: [`api_getInstrumentAsJSON`](@ref).
+
+"""
 function api_getInstrumentAsDataFrame(cusip::String, apiKeys::TDAmeritradeAPI.apiKeys)::ErrorTypes.Option{DataFrame}
 
     httpRet = _getInstrument(cusip, apiKeys);
 
-   _instrumentJSONToDataFrame(ErrorTypes.@?(httpRet), "array")
+    _instrumentJSONToDataFrame(ErrorTypes.@?(httpRet), "array")
 end
 
+"""
+```julia
+   api_searchInstrumentsAsDataFrame(symbol::String, projection::String, apiKeys::TDAmeritradeAPI.apiKeys)::ErrorTypes.Option{DataFrame}
+```
+Make the TDAmeritradeAPI call to the search\\_instruments endpoint, and return a DataFrame
+
+An ErrorTypes.jl Option object will be returned that can be evaluated with ErrorTypes.@?
+
+# Example
+```julia
+api_searchInstrumentsAsDataFrame("NET", "symbol-search", apiKey)
+some(1x7 DataFrame
+ Row | bondPrice  cusip      symbol  description                        exchange  assetType
+     | Nothing    String     String  String                             String    String   
+ ------------------------------------------------------------------------------------------
+   1 |            18915M107  NET     Cloudflare, Inc. Class A Common    NYSE      EQUITY)
+
+api_searchInstrumentsAsDataFrame("NET.*", "symbol-regex", apiKey)
+some(13x7 DataFrame
+ Row | bondPrice  cusip      symbol  description                        exchange    assetType
+     | Nothing    String     String  String                             String      String   
+ --------------------------------------------------------------------------------------------
+   1 |            29287L205  NETZ    Engine No. 1 ETF Trust Engine No   BATS        ETF
+   2 |            64114L102  NETO    NetObjects, Inc. Common Stock (C   Pink Sheet  EQUITY
+   3 |            Y2294C107  NETI    Eneti Inc. Common Stock            NYSE        EQUITY
+   4 |            629567207  NETC.U  Nabors Energy Transition Corp. U   NYSE        EQUITY
+[...]
+
+api_searchInstrumentsAsDataFrame("Cloud", "desc-search", apiKey)
+some(21x7 DataFrame
+ Row | bondPrice  cusip      symbol     description                        exchange    assetType
+     | Nothing    String     String     String                             String      String   
+ -----------------------------------------------------------------------------------------------
+   1 |            G2215E109  CDBDF      CLOUDBREAK DISCOVERY PLC Ordinar   Pink Sheet  EQUITY
+   2 |            18912C102  18912C102  CLOUDMD SOFTWARE & SERVICES INC    Unknown     UNKNOWN
+   3 |            189125057  189125057  Cloudcommerce Inc                  Unknown     UNKNOWN
+   4 |            18912C102  PHGRF      CLOUDMD SOFTWARE & SVCS INC Comm   Pink Sheet  EQUITY
+[...]
+
+api_searchInstrumentsAsDataFrame("NET", "fundamental", apiKey)
+some(1x51 DataFrame
+ Row | bondPrice cusip symbol description exchange assetType high52 low52 dividendAmount dividendYield dividendDate ...
+[...]
+
+```
+
+See Also: [`api_searchInstrumentsAsJSON`](@ref).
+
+"""
 function api_searchInstrumentsAsDataFrame(symbol::String, projection::String, apiKeys::TDAmeritradeAPI.apiKeys)::ErrorTypes.Option{DataFrame}
 
     httpRet = _searchInstruments(symbol, projection, apiKeys)
 
-   _instrumentJSONToDataFrame(ErrorTypes.@?(httpRet), "dict")
+    _instrumentJSONToDataFrame(ErrorTypes.@?(httpRet), "dict")
 end
 
 ###############################################################################
@@ -190,10 +324,47 @@ end
 ##  Convert JSON to Struct
 ##
 ###############################################################################
+"""                                                                                                                                                                                                                
+```julia
+   instrumentsToInstrumentDictStruct(json_string::String)::ErrorTypes.Option{InstrumentDict}
+```
+   
+Convert the JSON string returned by the TDAmeritradeAPI search\\_instruments API call to an InstrumentDict struct.
+This is largely an internal function to allow later conversions to DataFrame with proper type conversions.
+   
+An ErrorTypes.jl Option object will be returned that can be evaluated with ErrorTypes.@?
+   
+# Example
+```julia
+instrumentsToInstrumentDictStruct(read("./test/sample/instrument_search_multiple_results.json", String))
+some(TDAmeritradeAPI.InstrumentDict(Symbol("594NSP015") => TDAmeritradeAPI.Instrument
+[...]
+, :MSFT33 => TDAmeritradeAPI.Instrument
+[...]
+, :MSFT => TDAmeritradeAPI.Instrument
+[...]
+```
+"""
 function instrumentsToInstrumentDictStruct(json_string::String)::ErrorTypes.Option{InstrumentDict}
     some(JSON3.read(json_string, InstrumentDict))
 end
 
+"""                                                                                                                                                                                                                
+```julia
+   instrumentsToInstrumentArrayStruct(json_string::String)::ErrorTypes.Option{InstrumentArray}
+```
+   
+Convert the JSON string returned by the TDAmeritradeAPI get\\_instrument API call to an InstrumentArray struct.
+This is largely an internal function to allow later conversions to DataFrame with proper type conversions.
+   
+An ErrorTypes.jl Option object will be returned that can be evaluated with ErrorTypes.@?
+   
+# Example
+```julia
+instrumentsToInstrumentArrayStruct(read("./test/sample/instrument_equity.json", String))
+some(TDAmeritradeAPI.Instrument[TDAmeritradeAPI.Instrument(nothing, "18915M107", "NET", "CLOUDFLARE INC COM CL A", "EQY", "EQUITY", nothing)])
+```
+"""
 function instrumentsToInstrumentArrayStruct(json_string::String)::ErrorTypes.Option{InstrumentArray}
     some(JSON3.read(json_string, InstrumentArray))
 end
@@ -203,6 +374,25 @@ end
 ##  Convert Struct to JSON
 ##
 ###############################################################################
+"""                                                                                                                                                                                                                
+```julia
+   instrumentsToJSON(i::Union{InstrumentArray, InstrumentDict})::ErrorTypes.Option{String}
+```    
+   
+Convert an InstrumentArray or InstrumentDict struct to a JSON object.
+       
+An ErrorTypes.jl Option object will be returned that can be evaluated with ErrorTypes.@?
+       
+The returned JSON will not be in the same format as the initial return from the TDAmeritradeAPI call.
+       
+# Example 
+```julia 
+s = @?(instrumentsToInstrumentArrayStruct(read("./test/sample/instrument_equity.json", String)))
+
+instrumentsToJSON(s)
+some("[{\"bondPrice\":null,\"cusip\":\"18915M107\",\"symbol\":\"NET\",\"description\":\"CLOUDFLARE INC COM CL A\",\"exchange\":\"EQY\",\"assetType\":\"EQUITY\",\"fundamental\":null}]")
+```  
+"""
 function instrumentsToJSON(i::Union{InstrumentArray, InstrumentDict})::ErrorTypes.Option{String}
     some(JSON3.write(i))
 end
@@ -212,6 +402,25 @@ end
 ##  Instruments to DataFrame format conversion functions
 ##
 ################################################################################
+"""                                                                                                                                                                                                                
+```julia
+   parseInstrumentsJSONToDataFrame(json_string::String, api_call::String)::ErrorTypes.Option{DataFrame}
+```
+ 
+Convert the JSON string returned by the TDAmeritradeAPI instruments API calls to a DataFrame.
+ 
+An ErrorTypes.jl Option object will be returned that can be evaluated with ErrorTypes.@?
+ 
+# Example
+```julia
+parseInstrumentsJSONToDataFrame(read("./test/sample/instrument_equity.json", String), "get")
+some(1x6 DataFrame
+ Row | bondPrice  cusip      symbol  description              exchange  assetType
+     | Nothing    String     String  String                   String    String
+ --------------------------------------------------------------------------------
+   1 |            18915M107  NET     CLOUDFLARE INC COM CL A  EQY       EQUITY)
+```
+"""
 function parseInstrumentsJSONToDataFrame(json_string::String, api_call::String)::ErrorTypes.Option{DataFrame}
     @argcheck api_call in ["get", "search"]
     

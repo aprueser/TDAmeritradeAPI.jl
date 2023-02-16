@@ -276,14 +276,9 @@ end
 ##
 ###############################################################################
 """
-   api_getOptionChainAsJSON(symbol::String, apiKeys::TDAmeritradeAPI.apiKeys; 
-                            contractType::String = "ALL", strikeCount::Int64 = 25, 
-                            includeQuotes::Bool = false, strategy::String = "SINGLE", 
-                            interval::Int64 = 10, strike::Union{Float64, Nothing} = nothing, 
-                            range::String = "ALL", fromDate::Date = today(), 
-                            toDate::Union{Date, Nothing} = nothing, expMonth::String = "ALL", 
-                            optionType::String = "ALL"
-                           )::ErrorTypes.Option{DataFrame}
+```julia
+   api_getOptionChainAsJSON(symbol::String, apiKeys::TDAmeritradeAPI.apiKeys; kw...)::ErrorTypes.Option{DataFrame}
+```
 
 Make the TDAmeritradeAPI call to the get\\_option\\_chain endpoint, and return the raw JSON.
 
@@ -346,14 +341,9 @@ end
 ##
 ###############################################################################
 """
-   api_getOptionChainAsDataFrame(symbol::String, apiKeys::TDAmeritradeAPI.apiKeys; 
-                                 contractType::String = "ALL", strikeCount::Int64 = 25, 
-                                 includeQuotes::Bool = false, strategy::String = "SINGLE", 
-                                 interval::Int64 = 10, strike::Union{Float64, Nothing} = nothing, 
-                                 range::String = "ALL", fromDate::Date = today(), 
-                                 toDate::Union{Date, Nothing} = nothing, expMonth::String = "ALL", 
-                                 optionType::String = "ALL"
-                                )::ErrorTypes.Option{DataFrame}
+```julia
+   api_getOptionChainAsDataFrame(symbol::String, apiKeys::TDAmeritradeAPI.apiKeys; kw...)::ErrorTypes.Option{DataFrame}
+```
 
 Make the TDAmeritradeAPI call to the get\\_option\\_chain endpoint, and return a DataFrame
 
@@ -385,7 +375,9 @@ end
 ##
 ###############################################################################
 """
+```julia
    optionChainToOptionChainStruct(json_string::String)::ErrorTypes.Option{OptionChain}
+```
 
 Convert the JSON string returned by the TDAmeritradeAPI get\\_option\\_chain API call to an OptionChain struct.
 This is largely an internal function to allow later conversions to DataFrame with proper type conversions.
@@ -409,7 +401,9 @@ end
 ##
 ###############################################################################
 """
+```julia
    optionChainToJSON(oc::OptionChain)::ErrorTypes.Option{String}
+```
 
 Convert an OptionChain struct oc to a JSON object.
 
@@ -436,7 +430,9 @@ end
 ##
 ################################################################################
 """
+```julia
    parseOptionChainJSONToDataFrame(json_string::String)::ErrorTypes.Option{DataFrame}
+```
 
 Convert the JSON string returned by the TDAmeritradeAPI get\\_option\\_chain API call to a DataFrame.
 The put and call maps will be appended into a single DataFrame, with the PUT rows coming first.
