@@ -277,7 +277,7 @@ end
 ###############################################################################
 """
 ```julia
-   api_getOptionChainAsJSON(symbol::String, apiKeys::TDAmeritradeAPI.apiKeys; kw...)::ErrorTypes.Option{DataFrame}
+api_getOptionChainAsJSON(symbol::String, apiKeys::TDAmeritradeAPI.apiKeys; kw...)::ErrorTypes.Option{DataFrame}
 ```
 
 Make the TDAmeritradeAPI call to the get\\_option\\_chain endpoint, and return the raw JSON.
@@ -342,7 +342,7 @@ end
 ###############################################################################
 """
 ```julia
-   api_getOptionChainAsDataFrame(symbol::String, apiKeys::TDAmeritradeAPI.apiKeys; kw...)::ErrorTypes.Option{DataFrame}
+api_getOptionChainAsDataFrame(symbol::String, apiKeys::TDAmeritradeAPI.apiKeys; kw...)::ErrorTypes.Option{DataFrame}
 ```
 
 Make the TDAmeritradeAPI call to the get\\_option\\_chain endpoint, and return a DataFrame
@@ -376,10 +376,11 @@ end
 ###############################################################################
 """
 ```julia
-   optionChainToOptionChainStruct(json_string::String)::ErrorTypes.Option{OptionChain}
+optionChainToOptionChainStruct(json_string::String)::ErrorTypes.Option{OptionChain}
 ```
 
 Convert the JSON string returned by the TDAmeritradeAPI get\\_option\\_chain API call to an OptionChain struct.
+
 This is largely an internal function to allow later conversions to DataFrame with proper type conversions.
 
 An ErrorTypes.jl Option object will be returned that can be evaluated with ErrorTypes.@?
@@ -402,7 +403,7 @@ end
 ###############################################################################
 """
 ```julia
-   optionChainToJSON(oc::OptionChain)::ErrorTypes.Option{String}
+optionChainToJSON(oc::OptionChain)::ErrorTypes.Option{String}
 ```
 
 Convert an OptionChain struct oc to a JSON object.
@@ -431,11 +432,13 @@ end
 ################################################################################
 """
 ```julia
-   parseOptionChainJSONToDataFrame(json_string::String)::ErrorTypes.Option{DataFrame}
+parseOptionChainJSONToDataFrame(json_string::String)::ErrorTypes.Option{DataFrame}
 ```
 
 Convert the JSON string returned by the TDAmeritradeAPI get\\_option\\_chain API call to a DataFrame.
+
 The put and call maps will be appended into a single DataFrame, with the PUT rows coming first.
+
 Nested JSON objects will be flattened into columns in the output DataFrame.
 
 An ErrorTypes.jl Option object will be returned that can be evaluated with ErrorTypes.@?

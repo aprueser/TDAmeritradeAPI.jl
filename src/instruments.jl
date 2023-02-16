@@ -165,7 +165,7 @@ end
 ###############################################################################
 """
 ```julia
-   api_getInstrumentAsJSON(cusip::String, apiKeys::TDAmeritradeAPI.apiKeys)::ErrorTypes.Result{String, String}
+api_getInstrumentAsJSON(cusip::String, apiKeys::TDAmeritradeAPI.apiKeys)::ErrorTypes.Result{String, String}
 ```
 Make the TDAmeritradeAPI call to the get\\_instrument endpoint, and return the raw JSON.
 
@@ -183,7 +183,7 @@ end
 
 """
 ```julia
-   api_searchInstrumentsAsJSON(symbol::String, projection::String, apiKeys::TDAmeritradeAPI.apiKeys)::ErrorTypes.Result{String, String}
+api_searchInstrumentsAsJSON(symbol::String, projection::String, apiKeys::TDAmeritradeAPI.apiKeys)::ErrorTypes.Result{String, String}
 ```
 Make the TDAmeritradeAPI call to the search\\_instruments endpoint, and return the raw JSON.
 
@@ -191,14 +191,14 @@ An ErrorTypes.jl Option object will be returned that can be evaluated with Error
 
 # Arguments
 - `projection::String`: The type of request:
-    symbol-search: Retrieve instrument data of a specific symbol or cusip
-    symbol-regex: Retrieve instrument data for all symbols matching regex. 
-     Example: symbol=XYZ.* will return all symbols beginning with XYZ
-    desc-search: Retrieve instrument data for instruments whose description contains the word supplied.
-     Example: symbol=FakeCompany will return all instruments with FakeCompany in the description.
-    desc-regex: Search description with full regex support.
-     Example: symbol=XYZ.[A-C] returns all instruments whose descriptions contain a word beginning with XYZ followed by a character A through C.
-    fundamental: Returns fundamental data for a single instrument specified by exact symbol
+   - symbol-search: Retrieve instrument data of a specific symbol or cusip
+   - symbol-regex: Retrieve instrument data for all symbols matching regex. 
+     - Example: symbol=XYZ.* will return all symbols beginning with XYZ
+   - desc-search: Retrieve instrument data for instruments whose description contains the word supplied.
+     - Example: symbol=FakeCompany will return all instruments with FakeCompany in the description.
+   - desc-regex: Search description with full regex support.
+     - Example: symbol=XYZ.[A-C] returns all instruments whose descriptions contain a word beginning with XYZ followed by a character A through C.
+   - fundamental: Returns fundamental data for a single instrument specified by exact symbol
 
 # Example
 ```julia
@@ -236,7 +236,7 @@ end
 ###############################################################################
 """
 ```julia
-   api_getInstrumentAsDataFrame(cusip::String, apiKeys::TDAmeritradeAPI.apiKeys)::ErrorTypes.Option{DataFrame}
+api_getInstrumentAsDataFrame(cusip::String, apiKeys::TDAmeritradeAPI.apiKeys)::ErrorTypes.Option{DataFrame}
 ```
 Make the TDAmeritradeAPI call to the get\\_instrument endpoint, and return a DataFrame
 
@@ -265,7 +265,7 @@ end
 
 """
 ```julia
-   api_searchInstrumentsAsDataFrame(symbol::String, projection::String, apiKeys::TDAmeritradeAPI.apiKeys)::ErrorTypes.Option{DataFrame}
+api_searchInstrumentsAsDataFrame(symbol::String, projection::String, apiKeys::TDAmeritradeAPI.apiKeys)::ErrorTypes.Option{DataFrame}
 ```
 Make the TDAmeritradeAPI call to the search\\_instruments endpoint, and return a DataFrame
 
@@ -326,10 +326,11 @@ end
 ###############################################################################
 """                                                                                                                                                                                                                
 ```julia
-   instrumentsToInstrumentDictStruct(json_string::String)::ErrorTypes.Option{InstrumentDict}
+instrumentsToInstrumentDictStruct(json_string::String)::ErrorTypes.Option{InstrumentDict}
 ```
    
 Convert the JSON string returned by the TDAmeritradeAPI search\\_instruments API call to an InstrumentDict struct.
+
 This is largely an internal function to allow later conversions to DataFrame with proper type conversions.
    
 An ErrorTypes.jl Option object will be returned that can be evaluated with ErrorTypes.@?
@@ -351,10 +352,11 @@ end
 
 """                                                                                                                                                                                                                
 ```julia
-   instrumentsToInstrumentArrayStruct(json_string::String)::ErrorTypes.Option{InstrumentArray}
+instrumentsToInstrumentArrayStruct(json_string::String)::ErrorTypes.Option{InstrumentArray}
 ```
    
 Convert the JSON string returned by the TDAmeritradeAPI get\\_instrument API call to an InstrumentArray struct.
+
 This is largely an internal function to allow later conversions to DataFrame with proper type conversions.
    
 An ErrorTypes.jl Option object will be returned that can be evaluated with ErrorTypes.@?
@@ -376,7 +378,7 @@ end
 ###############################################################################
 """                                                                                                                                                                                                                
 ```julia
-   instrumentsToJSON(i::Union{InstrumentArray, InstrumentDict})::ErrorTypes.Option{String}
+instrumentsToJSON(i::Union{InstrumentArray, InstrumentDict})::ErrorTypes.Option{String}
 ```    
    
 Convert an InstrumentArray or InstrumentDict struct to a JSON object.
@@ -404,7 +406,7 @@ end
 ################################################################################
 """                                                                                                                                                                                                                
 ```julia
-   parseInstrumentsJSONToDataFrame(json_string::String, api_call::String)::ErrorTypes.Option{DataFrame}
+parseInstrumentsJSONToDataFrame(json_string::String, api_call::String)::ErrorTypes.Option{DataFrame}
 ```
  
 Convert the JSON string returned by the TDAmeritradeAPI instruments API calls to a DataFrame.

@@ -64,7 +64,9 @@ endpoints = Dict{String, Dict{String, String}}(
 )
 
 """
+```julia
    listEndpoints()::Dict{String, Dict{String, String}}
+```
 
 Return a Dict of all valid TDAmeritrade API endpoints where 
 ```julia

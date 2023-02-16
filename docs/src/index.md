@@ -35,7 +35,7 @@ Every method also has a AsDataFrame version that will parse the JSON and return 
 dfQQQ = ErrorTypes.@?(TDAmeritradeAPI.api_getPriceHistoryAsJSON("QQQ", keys))
 ```
 
-The Price History API additionally provides an function that returns a TimeSeries.TimeArray: api_getPriceHistoryAsTimeArray
+The Price History API additionally provides a function that returns a TimeSeries.TimeArray: api_getPriceHistoryAsTimeArray
 
 ## Ticker Symbol support
 Any API call that uses the symbol as part of the URL will not support FUTURES, FOREX, or INDEX symbols with a / or $ in the symbol.
@@ -69,6 +69,7 @@ Additional API that require Authentication that I will focus on implementing in 
 + Watchlists
 + WebSocket Streaming Data (Allows access to real-time streaming data, as well as OHLC data for FOREX, and FUTURES not supported by the Price History API)
 
+## Public Function List
 All defined API endpoints can be seen by calling the listEndpoints() function:
 ```@docs
 listEndpoints

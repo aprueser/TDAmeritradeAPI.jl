@@ -34,7 +34,7 @@ Every method also has a AsDataFrame version that will parse the JSON and return 
 dfQQQ = ErrorTypes.@?(TDAmeritradeAPI.api_getPriceHistoryAsDataFrame("QQQ", keys))
 ```
 
-The Price History API additionally provides an function that returns a TimeSeries.TimeArray: api_getPriceHistoryAsTimeArray
+The Price History API additionally provides a function that returns a TimeSeries.TimeArray: api_getPriceHistoryAsTimeArray
 
 In common usage one would call the api_ AsDataFrame function(s) to fetch and format the data in a single call.  
 If fetching a lot of data, it can be advantageous to call the AsJSON function followed by the parse JSONToDataFrame function 
