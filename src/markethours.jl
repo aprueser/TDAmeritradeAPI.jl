@@ -153,15 +153,78 @@ end
 ##  Market Hours - Function signiatures to return the JSON return as a String
 ##
 ###############################################################################
-function api_getMarketHoursAsJSON(market::String, apiKeys::apiKeys; marketDate::Date=Dates.dayofweek(today()) >= 6 ? today() + Dates.Day(8-Dates.dayofweek(today())) : today())::ErrorTypes.Result{String, String}
+"""  
+```julia
+api_getMarketHoursAsJSON(market::String, apiKeys::apiKeys; kw...)::ErrorTypes.Result{String, String}
+```  
+     
+Make the TDAmeritradeAPI call to the get\\_market\\_hours\\_for\\_single\\_market endpoint, and return the raw JSON.
+     
+An ErrorTypes.jl Option object will be returned that can be evaluated with ErrorTypes.@?
+
+# Arguments
+- `market::String`: The market to get hours for. Valid values are:
+   - "EQUITY"
+   - "OPTION"
+   - "FUTURE"
+   - "BOND"
+   - "FOREX"
+- `apiKeys::TDAmeritradeAPI.apiKeys`: the apiKeys object containing the CUST_KEY, access
+    and refresh tokens.
+
+# Keywords
+- `marketDate::Date`: Date to fetch the market hours for. Default to today(), unless today is a 
+    weekend, then the next Monday.
+
+# Example
+```julia
+api_getMarketHoursAsJSON("EQUITY", apiKey)
+Result{String, String}(Ok("{\"equity\":{\"EQ\":{\"date\":\"2023-02-17\",\"marketType\":\"EQUITY\",\"exchange\":\"NULL\",\"category\":\"NULL\",\"product\":\"EQ\"
+[...]
+```
+"""
+function api_getMarketHoursAsJSON(market::String, apiKeys::apiKeys; 
+                                  marketDate::Date=Dates.dayofweek(today()) >= 6 ? today() + Dates.Day(8-Dates.dayofweek(today())) : today()
+                                 )::ErrorTypes.Result{String, String}
     @argcheck marketDate >= today()
     @argcheck market in validMarkets
 
     _getMarketHours(market, apiKeys, marketDate);
 end
 
+"""  
+```julia
+api_getMarketHoursAsJSON(markets::Vector{String}, apiKeys::apiKeys; kw...)::ErrorTypes.Result{String, String}
+```  
+     
+Make the TDAmeritradeAPI call to the get\\_market\\_hours\\_for\\_multiple\\_markets endpoint, and return the raw JSON.
+     
+An ErrorTypes.jl Option object will be returned that can be evaluated with ErrorTypes.@?
 
-function api_getMarketHoursAsJSON(markets::Vector{String}, apiKeys::apiKeys; marketDate::Date=Dates.dayofweek(today()) >= 6 ? today() + Dates.Day(8-Dates.dayofweek(today())) : today())::ErrorTypes.Result{String, String}
+# Arguments
+- `markets::Vector{String}`: A Vector of markets to get hours for. Valid values are:
+   - "EQUITY"
+   - "OPTION"
+   - "FUTURE"
+   - "BOND"
+   - "FOREX"
+- `apiKeys::TDAmeritradeAPI.apiKeys`: the apiKeys object containing the CUST_KEY, access
+    and refresh tokens.
+
+# Keywords
+- `marketDate::Date`: Date to fetch the market hours for. Default to today(), unless today is a 
+    weekend, then the next Monday.
+
+# Example
+```julia
+api_getMarketHoursAsJSON(["EQUITY", "OPTION"], apiKey)
+Result{String, String}(Ok("{\"option\":{\"EQO\":{\"date\":\"2023-02-17\",\"marketType\":\"OPTION\",\"exchange\":\"NULL\",\"category\":\"NULL\",\"product\":\"EQO\"
+[...]
+```
+"""
+function api_getMarketHoursAsJSON(markets::Vector{String}, apiKeys::apiKeys; 
+                                  marketDate::Date=Dates.dayofweek(today()) >= 6 ? today() + Dates.Day(8-Dates.dayofweek(today())) : today()
+                                 )::ErrorTypes.Result{String, String}
     @argcheck marketDate >= today()
     @argcheck length(markets) == length(intersect(markets, validMarkets))
 
@@ -173,7 +236,35 @@ end
 ##  MarketHours - Function signiatures to return DataFrames
 ##
 ###############################################################################
-function api_getMarketHoursAsDataFrame(market::String, apiKeys::apiKeys, marketDate::Date=Dates.dayofweek(today()) >= 6 ? today() + Dates.Day(8-Dates.dayofweek(today())) : today())::ErrorTypes.Option{DataFrame}
+"""  
+```julia
+api_getMarketHoursAsDataFrame(market::String, apiKeys::apiKeys; kw...)::ErrorTypes.Option{DataFrame}
+```  
+     
+Make the TDAmeritradeAPI call to the get\\_market\\_hours\\_for\\_single\\_market endpoint, and return a DataFrame.
+     
+An ErrorTypes.jl Option object will be returned that can be evaluated with ErrorTypes.@?
+
+# Arguments
+See [`api_getMarketHoursAsJSON(::String, ::apiKeys)`](@ref).
+
+# Keywords
+See [`api_getMarketHoursAsJSON(::String, ::apiKeys)`](@ref).
+
+# Example
+```julia
+api_getMarketHoursAsDataFrame("EQUITY", apiKey)
+some(1x15 DataFrame
+ Row | date        marketType  exchange  category  product  productName  isOpen  preMarket_openDateTime ...
+     | Date        String      String    String    String   String       Bool    Union    
+ ----------------------------------------------------------------------------------------------------------
+   1 | 2023-02-17  EQUITY      NULL      NULL      EQ       equity         true  2023-02-17T07:00:00    ...
+[...]
+```
+"""
+function api_getMarketHoursAsDataFrame(market::String, apiKeys::apiKeys; 
+                                       marketDate::Date=Dates.dayofweek(today()) >= 6 ? today() + Dates.Day(8-Dates.dayofweek(today())) : today()
+                                      )::ErrorTypes.Option{DataFrame}
     @argcheck marketDate >= today()
     @argcheck market in validMarkets
 
@@ -182,7 +273,36 @@ function api_getMarketHoursAsDataFrame(market::String, apiKeys::apiKeys, marketD
     _marketHoursJSONToDataFrame(ErrorTypes.@?(httpRet))
 end
 
-function api_getMarketHoursAsDataFrame(markets::Vector{String}, apiKeys::apiKeys, marketDate::Date=Dates.dayofweek(today()) >= 6 ? today() + Dates.Day(8-Dates.dayofweek(today())) : today())::ErrorTypes.Option{DataFrame}
+"""  
+```julia
+api_getMarketHoursAsDataFrame(markets::Vector{String}, apiKeys::apiKeys; kw...)::ErrorTypes.Result{String, String}
+```  
+     
+Make the TDAmeritradeAPI call to the get\\_market\\_hours\\_for\\_multiple\\_markets endpoint, and return a DataFrame.
+     
+An ErrorTypes.jl Option object will be returned that can be evaluated with ErrorTypes.@?
+
+# Arguments
+See [`api_getMarketHoursAsJSON(::Vector{String}, ::apiKeys)`](@ref).
+
+# Keywords
+See [`api_getMarketHoursAsJSON(::Vector{String}, ::apiKeys)`](@ref).
+
+# Example
+```julia
+api_getMarketHoursAsDataFrame(["EQUITY", "OPTION"], apiKey)
+some(3x15 DataFrame
+ Row | date        marketType  exchange  category  product  productName    isOpen  preMarket_openDateTime ...
+     | Date        String      String    String    String   String         Bool    Union
+ ------------------------------------------------------------------------------------------------------------
+   1 | 2023-02-17  EQUITY      NULL      NULL      EQ       equity           true  2023-02-17T07:00:00    ...
+   2 | 2023-02-17  OPTION      NULL      NULL      IND      index option     true
+[...]
+```
+"""
+function api_getMarketHoursAsDataFrame(markets::Vector{String}, apiKeys::apiKeys; 
+                                       marketDate::Date=Dates.dayofweek(today()) >= 6 ? today() + Dates.Day(8-Dates.dayofweek(today())) : today()
+                                      )::ErrorTypes.Option{DataFrame}
     @argcheck marketDate >= today()
     @argcheck length(markets) == length(intersect(markets, validMarkets))
     
@@ -196,6 +316,24 @@ end
 ##  Convert JSON to Struct
 ##
 ###############################################################################
+"""                                                                                                                                                                                                                
+```julia
+marketHoursToMarketTypesStruct(json_string::String)::ErrorTypes.Option{MarketTypes}
+```    
+   
+Convert the JSON string returned by a TDAmeritradeAPI get\\_market\\_hours... API calls to a MarketTypes struct.
+       
+This is largely an internal function to allow later conversions to DataFrame with proper type conversions.
+       
+An ErrorTypes.jl Option object will be returned that can be evaluated with ErrorTypes.@?
+       
+# Example 
+```julia 
+marketHoursToMarketTypesStruct(j)
+some(TDAmeritradeAPI.MarketTypes(Dict{String, TDAmeritradeAPI.Market}("EQ" => TDAmeritradeAPI.Market(Date("2023-02-17"), "EQUITY"
+[...]  
+```  
+""" 
 function marketHoursToMarketTypesStruct(json_string::String)::ErrorTypes.Option{MarketTypes}
     some(JSON3.read(json_string, MarketTypes))
 end
@@ -205,6 +343,24 @@ end
 ##  Convert Struct to JSON
 ##
 ###############################################################################
+"""
+```julia
+marketHoursToJSON(m::MarketTypes)::ErrorTypes.Option{String}
+```
+  
+Convert a MarketTypes struct m to a JSON object.
+  
+An ErrorTypes.jl Option object will be returned that can be evaluated with ErrorTypes.@?
+  
+The returned JSON will not be in the same format as the initial return from the TDAmeritradeAPI call.
+  
+# Example
+```julia
+marketHoursToJSON(s)
+some("{\"equity\":{\"EQ\":{\"date\":\"2023-02-17\",\"marketType\":\"EQUITY\",\"exchange\":\"NULL\",\"category\":\"NULL\"
+[...]
+```
+"""
 function marketHoursToJSON(m::MarketTypes)::ErrorTypes.Option{String}
     some(JSON3.write(m))
 end
@@ -214,6 +370,29 @@ end
 ##  MarketHours to DataFrame format conversion functions
 ##
 ################################################################################
+"""
+```julia
+parseMarketHoursJSONToDataFrame(json_string::String)::ErrorTypes.Option{DataFrame}
+```
+ 
+Convert the JSON string returned by a TDAmeritradeAPI get\\_market\\_hours... API to a DataFrame.
+ 
+Nested JSON objects will be flattened into columns in the output DataFrame.
+ 
+An ErrorTypes.jl Option object will be returned that can be evaluated with ErrorTypes.@?
+ 
+# Example
+```julia
+parseMarketHoursJSONToDataFrame(j)
+some(3x15 DataFrame
+ Row | date        marketType  exchange  category  product  productName    isOpen  preMarket_openDateTime ...
+     | Date        String      String    String    String   String         Bool    Union
+ ------------------------------------------------------------------------------------------------------------
+   1 | 2023-02-17  EQUITY      NULL      NULL      EQ       equity           true  2023-02-17T07:00:00    ...
+   2 | 2023-02-17  OPTION      NULL      NULL      IND      index option     true
+[...]
+```
+"""
 function parseMarketHoursJSONToDataFrame(json_string::String)::ErrorTypes.Option{DataFrame}
     _marketHoursJSONToDataFrame(json_string)
 end

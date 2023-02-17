@@ -7,7 +7,7 @@
 ## TD Ameritrade API
 Julia implementation of the TD Ameritrade API.  This package provides convinience functions to format the return JSON into DataFrames.
 
-API Defintion, and basic guides can be found at: https://developer.tdameritrade.com/apis
+API Defintion, and basic guides can be found at [TD Ameritrade API](https://developer.tdameritrade.com/apis)
 
 All API calls utilize the [ErrorTypes](https://juliahub.com/ui/Packages/ErrorTypes/VQlfN/) for safe error handling. 
 

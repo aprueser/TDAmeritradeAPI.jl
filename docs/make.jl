@@ -19,7 +19,10 @@ makedocs(;
     pages=[
         "Documentation" => "index.md",
         "Instruments"   => "instruments.md",
+        "Market Hours"  => "marketHours.md",
+        "Movers"        => "movers.md",
         "Option Chain"  => "optionChain.md",
+        "Price History" => "priceHistory.md",
     ],
 )
 

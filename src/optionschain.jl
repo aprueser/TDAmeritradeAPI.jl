@@ -351,6 +351,9 @@ An ErrorTypes.jl Option object will be returned that can be evaluated with Error
 
 # Arguments
 See [`api_getOptionChainAsJSON`](@ref).
+
+# Keywords
+See [`api_getOptionChainAsJSON`](@ref).
 """
 function api_getOptionChainAsDataFrame(symbol::String, apiKeys::TDAmeritradeAPI.apiKeys; 
                                        contractType::String = "ALL", strikeCount::Int64 = 25, 
@@ -414,7 +417,7 @@ The returned JSON will not be in the same format as the initial return from the 
 
 # Example
 ```julia
-TDAmeritradeAPI.optionChainToJSON(oc)
+optionChainToJSON(oc)
 some("{\"symbol\":\"NET\",\"status\":\"SUCCESS\",\"underlying\":null,\"strategy\":\"SINGLE\" 
 [...]
 ```
