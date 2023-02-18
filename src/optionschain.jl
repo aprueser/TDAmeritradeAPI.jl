@@ -251,7 +251,7 @@ function _optionChainJSONToDataFrame(rawJSON::String)::ErrorTypes.Option{DataFra
                                   :UnderlyingPrice => oc.underlyingPrice)
 
     if !isnothing(oc.underlying)
-        underlyingDF = singleSturctToDataFrame(oc.underlying)
+        underlyingDF = @?(singleStructToDataFrame(oc.underlying))
 
         df = DataFrames.innerjoin(df, underlyingDF, on = :Underlying => :symbol, makeunique = true, 
                                   renamecols = "" => "_underlying");

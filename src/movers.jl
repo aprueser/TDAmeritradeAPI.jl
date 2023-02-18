@@ -84,9 +84,9 @@ An ErrorTypes.jl Option object will be returned that can be evaluated with Error
  
 # Arguments
 - `index::String`: The index to get the top 10 movers for. Valid values are:
-   - "\$COMPX"
-   - "\$DJI"
-   - "\$SPX.X"
+   - "\\\$COMPX"
+   - "\\\$DJI"
+   - "\\\$SPX.X"
 - `direction`: The direction of the moves to fetch. Valid values are "up" or "down".
 - `change`: The measure of the move. Valid values are "percent" or "value".
 - `apiKeys::TDAmeritradeAPI.apiKeys`: the apiKeys object containing the CUST_KEY, access
@@ -94,7 +94,7 @@ An ErrorTypes.jl Option object will be returned that can be evaluated with Error
  
 # Example
 ```julia
-api_getMoversAsJSON("\$SPX.X", "up", "percent", apiKey)
+api_getMoversAsJSON("\\\$SPX.X", "up", "percent", apiKey)
 Result{String, String}(Ok("[{\"change\":0.14539007092198572,\"description\":\"West Pharmaceutical Services, Inc. Common Stock\",\"direction\":\"up\"
 [...]
 ```
@@ -124,9 +124,9 @@ An ErrorTypes.jl Option object will be returned that can be evaluated with Error
  
 # Arguments 
 - `index::String`: The index to get the top 10 movers for. Valid values are:   
-   - "\$COMPX" 
-   - "\$DJI" 
-   - "\$SPX.X" 
+   - "\\\$COMPX" 
+   - "\\\$DJI" 
+   - "\\\$SPX.X" 
 - `direction`: The direction of the moves to fetch. Valid values are "up" or "down".
 - `change`: The measure of the move. Valid values are "percent" or "value".    
 - `apiKeys::TDAmeritradeAPI.apiKeys`: the apiKeys object containing the CUST_KEY, access
@@ -134,7 +134,7 @@ An ErrorTypes.jl Option object will be returned that can be evaluated with Error
  
 # Example 
 ```julia 
-api_getMoversAsDataFrame("\$SPX.X", "up", "percent", apiKey) 
+api_getMoversAsDataFrame("\\\$SPX.X", "up", "percent", apiKey) 
 some(10x6 DataFrame
  Row | change     description                        direction  last     symbol  totalVolume
      | Float64    String                             String     Float64  String  Int64

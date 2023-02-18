@@ -47,7 +47,7 @@ All Dates are in the America/NewYork timezone as returned by the API
 The Price History DateTime values reflect when the candle was opened
 
 ## Symbol examples
-- Index Symbols: $SPX.X, $COMPX, $DJI
+- Index Symbols: \$SPX.X, \$COMPX, \$DJI
 - Forex Symbols: USD/CAD
 - Futures Symbols: /ES, /NQ
 

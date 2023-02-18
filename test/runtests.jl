@@ -171,6 +171,7 @@ end
         @test expect(TDAmeritradeAPI.api_getOptionChainAsJSON("NET", apiKey), "ERROR") != "ERROR"                    skip = skipAPITests
 
         @test expect(TDAmeritradeAPI.api_getOptionChainAsDataFrame("NET", apiKey), "ERROR") != "ERROR"               skip = skipAPITests
+        @test expect(TDAmeritradeAPI.api_getOptionChainAsDataFrame("NET", apiKey, includeQuotes = true), "ERROR") != "ERROR"               skip = skipAPITests
     end
 
     @testset "To Structs" begin
