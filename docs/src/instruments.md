@@ -1,3 +1,5 @@
+# Instruments
+
 ## api_getInstrumentAsJSON
 ```@docs
 api_getInstrumentAsJSON

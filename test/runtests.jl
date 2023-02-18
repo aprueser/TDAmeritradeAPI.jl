@@ -2,6 +2,9 @@ using TDAmeritradeAPI
 using Test
 using Dates, ErrorTypes, JSON3, DataFrames, TimeSeries
 
+## Skip the API Call tests
+skipAPITests = false
+
 ## Enter your TDAmeritrade API key here for local testing, remove before committing
 apiKey = TDAmeritradeAPI.apiKeys(ENV["TDA_CUST_KEY"], "", now(), "", now(), now() - Minute(30), "unauthorized");
 badKey = TDAmeritradeAPI.apiKeys(ENV["TDA_BAD_KEY"], "", now(), "", now(), now() - Minute(30), "unauthorized");
@@ -58,6 +61,29 @@ function loadSampleJSON(type::String)::Result{String, String}
 end
 
 @testset verbose = true "TDAmeritradeAPI.Instruments" begin
+    @testset "HTTP Calls" begin
+        @test expect(TDAmeritradeAPI._getInstrument("SPY", apiKey), "ERROR") != "ERROR"                             skip = skipAPITests
+        @test expect(TDAmeritradeAPI._searchInstruments("NET", "fundamental", apiKey), "ERROR") != "ERROR"          skip = skipAPITests
+        @test expect(TDAmeritradeAPI._searchInstruments("SPY", "symbol-search", apiKey), "ERROR") != "ERROR"        skip = skipAPITests
+        @test expect(TDAmeritradeAPI._searchInstruments("SP.*", "symbol-regex", apiKey), "ERROR") != "ERROR"        skip = skipAPITests
+        @test expect(TDAmeritradeAPI._searchInstruments("VIX", "desc-search", apiKey), "ERROR") != "ERROR"          skip = skipAPITests
+        @test expect(TDAmeritradeAPI._searchInstruments(".*Standard.*", "desc-regex", apiKey), "ERROR") != "ERROR"  skip = skipAPITests
+
+        @test expect(TDAmeritradeAPI.api_getInstrumentAsJSON("SPY", apiKey), "ERROR") != "ERROR"                             skip = skipAPITests
+        @test expect(TDAmeritradeAPI.api_searchInstrumentsAsJSON("NET", "fundamental", apiKey), "ERROR") != "ERROR"          skip = skipAPITests
+        @test expect(TDAmeritradeAPI.api_searchInstrumentsAsJSON("SPY", "symbol-search", apiKey), "ERROR") != "ERROR"        skip = skipAPITests
+        @test expect(TDAmeritradeAPI.api_searchInstrumentsAsJSON("SP.*", "symbol-regex", apiKey), "ERROR") != "ERROR"        skip = skipAPITests
+        @test expect(TDAmeritradeAPI.api_searchInstrumentsAsJSON("VIX", "desc-search", apiKey), "ERROR") != "ERROR"          skip = skipAPITests
+        @test expect(TDAmeritradeAPI.api_searchInstrumentsAsJSON(".*Standard.*", "desc-regex", apiKey), "ERROR") != "ERROR"  skip = skipAPITests
+
+        @test expect(TDAmeritradeAPI.api_getInstrumentAsDataFrame("SPY", apiKey), "ERROR") != "ERROR"                             skip = skipAPITests
+        @test expect(TDAmeritradeAPI.api_searchInstrumentsAsDataFrame("NET", "fundamental", apiKey), "ERROR") != "ERROR"          skip = skipAPITests
+        @test expect(TDAmeritradeAPI.api_searchInstrumentsAsDataFrame("SPY", "symbol-search", apiKey), "ERROR") != "ERROR"        skip = skipAPITests
+        @test expect(TDAmeritradeAPI.api_searchInstrumentsAsDataFrame("SP.*", "symbol-regex", apiKey), "ERROR") != "ERROR"        skip = skipAPITests
+        @test expect(TDAmeritradeAPI.api_searchInstrumentsAsDataFrame("VIX", "desc-search", apiKey), "ERROR") != "ERROR"          skip = skipAPITests
+        @test expect(TDAmeritradeAPI.api_searchInstrumentsAsDataFrame(".*Standard.*", "desc-regex", apiKey), "ERROR") != "ERROR"  skip = skipAPITests
+    end
+
     @testset "To Structs" begin
         @test ErrorTypes.@?(TDAmeritradeAPI.instrumentsToInstrumentArrayStruct(ErrorTypes.@?(loadSampleJSON("instrumentsEquity")))) isa TDAmeritradeAPI.InstrumentArray
         @test ErrorTypes.@?(TDAmeritradeAPI.instrumentsToInstrumentArrayStruct(ErrorTypes.@?(loadSampleJSON("instrumentsBond")))) isa TDAmeritradeAPI.InstrumentArray
@@ -80,6 +106,17 @@ end
 end
 
 @testset verbose = true "TDAmeritradeAPI.MarketHours" begin
+    @testset "HTTP Calls" begin
+        @test expect(TDAmeritradeAPI._getMarketHours("EQUITY", apiKey), "ERROR") != "ERROR"                             skip = skipAPITests
+        @test expect(TDAmeritradeAPI._getMarketHours(["EQUITY","OPTION"], apiKey), "ERROR") != "ERROR"                  skip = skipAPITests
+
+        @test expect(TDAmeritradeAPI.api_getMarketHoursAsJSON("EQUITY", apiKey), "ERROR") != "ERROR"                    skip = skipAPITests
+        @test expect(TDAmeritradeAPI.api_getMarketHoursAsJSON(["EQUITY","OPTION"], apiKey), "ERROR") != "ERROR"         skip = skipAPITests
+
+        @test expect(TDAmeritradeAPI.api_getMarketHoursAsDataFrame("EQUITY", apiKey), "ERROR") != "ERROR"               skip = skipAPITests
+        @test expect(TDAmeritradeAPI.api_getMarketHoursAsDataFrame(["EQUITY","OPTION"], apiKey), "ERROR") != "ERROR"    skip = skipAPITests
+    end
+
     @testset "To Structs" begin
         @test ErrorTypes.@?(TDAmeritradeAPI.marketHoursToMarketTypesStruct(ErrorTypes.@?(loadSampleJSON("marketHoursAll")))) isa TDAmeritradeAPI.MarketTypes
         @test ErrorTypes.@?(TDAmeritradeAPI.marketHoursToMarketTypesStruct(ErrorTypes.@?(loadSampleJSON("marketHoursEquity")))) isa TDAmeritradeAPI.MarketTypes
@@ -105,6 +142,13 @@ end
 end
 
 @testset verbose = true "TDAmeritradeAPI.Movers" begin
+    @testset "HTTP Calls" begin
+        @test expect(TDAmeritradeAPI._getMovers("\$DJI", "up", "percent", apiKey), "ERROR") != "ERROR"                             skip = skipAPITests
+        
+        @test expect(TDAmeritradeAPI.api_getMoversAsJSON("\$DJI", "up", "value", apiKey), "ERROR") != "ERROR"                      skip = skipAPITests
+      
+        @test expect(TDAmeritradeAPI.api_getMoversAsDataFrame("\$DJI", "down", "percent", apiKey), "ERROR") != "ERROR"             skip = skipAPITests
+    end
     @testset "To Structs" begin
         @test ErrorTypes.@?(TDAmeritradeAPI.moversToMoversStruct(ErrorTypes.@?(loadSampleJSON("movers")))) isa TDAmeritradeAPI.Movers
     end
@@ -121,6 +165,14 @@ end
 end
 
 @testset verbose = true "TDAmeritradeAPI.OptionChain" begin
+    @testset "HTTP Calls" begin
+        @test expect(TDAmeritradeAPI._getOptionChain("NET", apiKey), "ERROR") != "ERROR"                             skip = skipAPITests
+
+        @test expect(TDAmeritradeAPI.api_getOptionChainAsJSON("NET", apiKey), "ERROR") != "ERROR"                    skip = skipAPITests
+
+        @test expect(TDAmeritradeAPI.api_getOptionChainAsDataFrame("NET", apiKey), "ERROR") != "ERROR"               skip = skipAPITests
+    end
+
     @testset "To Structs" begin
         @test ErrorTypes.@?(TDAmeritradeAPI.optionChainToOptionChainStruct(ErrorTypes.@?(loadSampleJSON("optionChainEquity")))) isa TDAmeritradeAPI.OptionChain
     end
@@ -138,35 +190,50 @@ end
 
 @testset verbose = true "TDAmeritradeAPI.PriceHistory" begin
     @testset "HTTP Calls" begin
-        @test expect(TDAmeritradeAPI._getPriceHistory("SPY", apiKey, numPeriods=1), "ERROR") != "ERROR"                                     skip = true
+        @test expect(TDAmeritradeAPI._getPriceHistory("SPY", apiKey, numPeriods=1), "ERROR") != "ERROR"                                     skip = skipAPITests
     
-        @test expect(TDAmeritradeAPI.api_getPriceHistoryAsJSON("SPY", apiKey, numPeriods=1), "ERROR") != "ERROR"                            skip = true
-        @test expect_error(TDAmeritradeAPI.api_getPriceHistoryAsJSON("SPY", badKey, numPeriods=1), "PASS") == "500::Internal Server Error"  skip = true
+        @test expect(TDAmeritradeAPI.api_getPriceHistoryAsJSON("SPY", apiKey, numPeriods=1), "ERROR") != "ERROR"                            skip = skipAPITests
     
-        @test expect(TDAmeritradeAPI.api_getPriceHistoryAsDataFrame("SPY", apiKey, numPeriods=1), "ERROR") != "ERROR"                       skip = true
-        @test expect(TDAmeritradeAPI.api_getPriceHistoryAsTimeArray("SPY", apiKey, numPeriods=1), "ERROR") != "ERROR"                       skip = true
+        @test expect(TDAmeritradeAPI.api_getPriceHistoryAsDataFrame("SPY", apiKey, numPeriods=1), "ERROR") != "ERROR"                       skip = skipAPITests
+        @test expect(TDAmeritradeAPI.api_getPriceHistoryAsTimeArray("SPY", apiKey, numPeriods=1), "ERROR") != "ERROR"                       skip = skipAPITests
+
+        @test expect_error(TDAmeritradeAPI.api_getPriceHistoryAsJSON("SPY", badKey, numPeriods=1), "PASS") == "500::Internal Server Error"  skip = skipAPITests
     end
 
+    json_string = ErrorTypes.@?(loadSampleJSON("priceHistory"))
     @testset "To Structs" begin
-        @test ErrorTypes.@?(TDAmeritradeAPI.priceHistoryToCandleListStruct(ErrorTypes.@?(loadSampleJSON("priceHistory")))) isa TDAmeritradeAPI.CandleList
+        @test ErrorTypes.@?(TDAmeritradeAPI.priceHistoryToCandleListStruct(json_string)) isa TDAmeritradeAPI.CandleList
     end
 
     @testset "To DataFrame" begin
-        @test ErrorTypes.@?(TDAmeritradeAPI._priceHistoryJSONToDataFrame(ErrorTypes.@?(loadSampleJSON("priceHistory")))) isa DataFrame
-        @test ErrorTypes.@?(TDAmeritradeAPI.parsePriceHistoryJSONToDataFrame(ErrorTypes.@?(loadSampleJSON("priceHistory")))) isa DataFrame
+        @test ErrorTypes.@?(TDAmeritradeAPI._priceHistoryJSONToDataFrame(json_string)) isa DataFrame
+        @test ErrorTypes.@?(TDAmeritradeAPI.parsePriceHistoryJSONToDataFrame(json_string)) isa DataFrame
     end
 
     @testset "To TimeArray" begin
-        @test ErrorTypes.@?(TDAmeritradeAPI._priceHistoryJSONToTimeArray(ErrorTypes.@?(loadSampleJSON("priceHistory")))) isa TimeSeries.TimeArray
-        @test ErrorTypes.@?(TDAmeritradeAPI.parsePriceHistoryJSONToTimeArray(ErrorTypes.@?(loadSampleJSON("priceHistory")))) isa TimeSeries.TimeArray
+        @test ErrorTypes.@?(TDAmeritradeAPI._priceHistoryJSONToTimeArray(json_string)) isa TimeSeries.TimeArray
+        @test ErrorTypes.@?(TDAmeritradeAPI.parsePriceHistoryJSONToTimeArray(json_string)) isa TimeSeries.TimeArray
     end
 
     @testset "To JSON" begin
-        @test ErrorTypes.@?(TDAmeritradeAPI.priceHistoryToJSON(ErrorTypes.@?(TDAmeritradeAPI.priceHistoryToCandleListStruct(ErrorTypes.@?(loadSampleJSON("priceHistory")))))) isa String
+        @test ErrorTypes.@?(TDAmeritradeAPI.priceHistoryToJSON(ErrorTypes.@?(TDAmeritradeAPI.priceHistoryToCandleListStruct(json_string)))) isa String
     end
 end
 
 @testset verbose = true "TDAmeritradeAPI.Quotes" begin
+    @testset "HTTP Calls" begin
+        @test expect(TDAmeritradeAPI._getQuote("SPY", apiKey), "ERROR") != "ERROR"                                     skip = skipAPITests
+        @test expect(TDAmeritradeAPI._getQuotes("SPY,QQQ", apiKey), "ERROR") != "ERROR"                                skip = skipAPITests
+
+        @test expect(TDAmeritradeAPI.api_getQuoteAsJSON("SPY", apiKey), "ERROR") != "ERROR"                            skip = skipAPITests
+        @test expect(TDAmeritradeAPI.api_getQuotesAsJSON(["SPY","QQQ"], apiKey), "ERROR") != "ERROR"                   skip = skipAPITests
+        @test expect(TDAmeritradeAPI.api_getQuotesAsJSON("SPY,QQQ", apiKey), "ERROR") != "ERROR"                       skip = skipAPITests
+
+        @test expect(TDAmeritradeAPI.api_getQuoteAsDataFrame("SPY", apiKey), "ERROR") != "ERROR"                       skip = skipAPITests
+        @test expect(TDAmeritradeAPI.api_getQuotesAsDataFrame(["SPY","QQQ"], apiKey), "ERROR") != "ERROR"              skip = skipAPITests
+        @test expect(TDAmeritradeAPI.api_getQuotesAsDataFrame("SPY,QQQ", apiKey), "ERROR") != "ERROR"                  skip = skipAPITests
+    end
+
     @testset "To Structs" begin
         @test ErrorTypes.@?(TDAmeritradeAPI.quotesToQuoteStruct(ErrorTypes.@?(loadSampleJSON("quotesForex")))) isa TDAmeritradeAPI.QuoteArray
         @test ErrorTypes.@?(TDAmeritradeAPI.quotesToQuoteStruct(ErrorTypes.@?(loadSampleJSON("quotesFuture")))) isa TDAmeritradeAPI.QuoteArray

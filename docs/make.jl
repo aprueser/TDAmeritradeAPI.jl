@@ -23,6 +23,7 @@ makedocs(;
         "Movers"        => "movers.md",
         "Option Chain"  => "optionChain.md",
         "Price History" => "priceHistory.md",
+        "Quotes"        => "quotes.md",
     ],
 )
 

@@ -1,3 +1,5 @@
+# Option Chain
+
 ## api_getOptionChainAsJSON
 ```@docs
 api_getOptionChainAsJSON

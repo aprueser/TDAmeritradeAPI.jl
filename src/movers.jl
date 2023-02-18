@@ -70,7 +70,7 @@ end
 
 ###############################################################################
 ##
-##  Quotes - Function signiatures to return the JSON return as a String
+##  Movers - Function signiatures to return the JSON return as a String
 ##
 ###############################################################################
 """  
@@ -94,7 +94,7 @@ An ErrorTypes.jl Option object will be returned that can be evaluated with Error
  
 # Example
 ```julia
-pi_getMoversAsJSON("\$SPX.X", "up", "percent", apiKey)
+api_getMoversAsJSON("\$SPX.X", "up", "percent", apiKey)
 Result{String, String}(Ok("[{\"change\":0.14539007092198572,\"description\":\"West Pharmaceutical Services, Inc. Common Stock\",\"direction\":\"up\"
 [...]
 ```

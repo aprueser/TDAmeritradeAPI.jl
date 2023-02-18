@@ -95,7 +95,9 @@ mutable struct QuoteStruct
     delayed::Bool
     realtimeEntitled::Bool
 
-    QuoteStruct() = new(Tuple(fieldtype(QuoteStruct, x) == String ? "" : fieldtype(QuoteStruct, x) in [Int32, Int64, Float64] ? 0 : fieldtype(QuoteStruct, x) == Bool ? false : nothing for x in fieldnames(QuoteStruct))...)
+    QuoteStruct() = new(Tuple(fieldtype(QuoteStruct, x) == String ? "" : 
+                              fieldtype(QuoteStruct, x) in [Int32, Int64, Float64] ? 0 : 
+                              fieldtype(QuoteStruct, x) == Bool ? false : nothing for x in fieldnames(QuoteStruct))...)
 end
 StructTypes.StructType(::Type{QuoteStruct}) = StructTypes.Mutable();
 StructTypes.idproperty(::Type{QuoteStruct}) = :symbol
@@ -175,14 +177,79 @@ end
 ##  Quotes - Function signiatures to return the JSON return as a String
 ##
 ###############################################################################
+"""  
+```julia
+api_getQuoteAsJSON(symbol::String, apiKeys::TDAmeritradeAPI.apiKeys)::ErrorTypes.Result{String, String}
+```  
+     
+Make the TDAmeritradeAPI call to the get\\_quote endpoint, and return the raw JSON.
+     
+An ErrorTypes.jl Option object will be returned that can be evaluated with ErrorTypes.@?
+ 
+# Arguments
+- `symbol::String`: The ticker symbol to fetch a quote for
+- `apiKeys::TDAmeritradeAPI.apiKeys`: the apiKeys object containing the CUST_KEY, access
+    and refresh tokens.
+ 
+# Example
+```julia
+api_getQuoteAsJSON("NET", apiKey)
+Result{String, String}(Ok("{\"NET\":{\"assetType\":\"EQUITY\",\"assetMainType\":\"EQUITY\",\"cusip\":\"18915M107\",\"assetSubType\":\"\",\"symbol\":\"NET\"
+[...]
+```
+"""
 function api_getQuoteAsJSON(symbol::String, apiKeys::TDAmeritradeAPI.apiKeys)::ErrorTypes.Result{String, String}
      _getQuote(symbol, apiKeys);
 end
 
+"""  
+```julia
+api_getQuotesAsJSON(symbols::Vector{String}, apiKeys::TDAmeritradeAPI.apiKeys)ErrorTypes.Result{String, String}
+```  
+     
+Make the TDAmeritradeAPI call to the get\\_quotes endpoint, and return the raw JSON.
+     
+An ErrorTypes.jl Option object will be returned that can be evaluated with ErrorTypes.@?
+ 
+# Arguments
+- `symbols::Vector{String}`: A Vector of ticker symbols to fetch a quotes for
+- `apiKeys::TDAmeritradeAPI.apiKeys`: the apiKeys object containing the CUST_KEY, access
+    and refresh tokens.
+ 
+# Example
+```julia
+api_getQuotesAsJSON(["NET", "PANW", "ZS"], apiKey)
+Result{String, String}(Ok("{\"NET\":{\"assetType\":\"EQUITY\",\"assetMainType\":\"EQUITY\",\"cusip\":\"18915M107\",\"assetSubType\":\"\",\"symbol\":\"NET\" ...
+                            \"PANW\":{\"assetType\":\"EQUITY\",\"assetMainType\":\"EQUITY\",\"cusip\":\"697435105\",\"assetSubType\":\"\",\"symbol\":\"PANW\" ...
+[...]
+```
+"""
 function api_getQuotesAsJSON(symbols::Vector{String}, apiKeys::TDAmeritradeAPI.apiKeys)ErrorTypes.Result{String, String}
     _getQuotes(join(symbols, ","), apiKeys);
 end
 
+"""
+```julia
+api_getQuotesAsJSON(symbols::String, apiKeys::TDAmeritradeAPI.apiKeys)ErrorTypes.Result{String, String}
+```
+
+Make the TDAmeritradeAPI call to the get\\_quotes endpoint, and return the raw JSON.
+
+An ErrorTypes.jl Option object will be returned that can be evaluated with ErrorTypes.@?
+
+# Arguments
+- `symbols::String`: A comma separated string of ticker symbols to fetch a quotes for
+- `apiKeys::TDAmeritradeAPI.apiKeys`: the apiKeys object containing the CUST_KEY, access
+    and refresh tokens.
+
+# Example
+```julia
+api_getQuotesAsJSON("NET,PANW,ZS", apiKey)
+Result{String, String}(Ok("{\"NET\":{\"assetType\":\"EQUITY\",\"assetMainType\":\"EQUITY\",\"cusip\":\"18915M107\",\"assetSubType\":\"\",\"symbol\":\"NET\" ...
+                            \"PANW\":{\"assetType\":\"EQUITY\",\"assetMainType\":\"EQUITY\",\"cusip\":\"697435105\",\"assetSubType\":\"\",\"symbol\":\"PANW\" ...
+[...]
+```
+"""
 function api_getQuotesAsJSON(symbols::String, apiKeys::TDAmeritradeAPI.apiKeys)ErrorTypes.Result{String, String}
     _getQuotes(symbols, apiKeys);
 end
@@ -192,16 +259,95 @@ end
 ##  Quotes - Function signiatures to return DataFrames
 ##
 ###############################################################################
+"""                           
+```julia                      
+api_getQuoteAsDataFrame(symbol::String, apiKeys::TDAmeritradeAPI.apiKeys)ErrorTypes.Result{String, String}
+```                           
+ 
+Make the TDAmeritradeAPI call to the get\\_quote endpoint, and return a DataFrame
+ 
+An ErrorTypes.jl Option object will be returned that can be evaluated with ErrorTypes.@?
+ 
+# Arguments                   
+- `symbol::String`: The ticker symbol to fetch a quote for
+- `apiKeys::TDAmeritradeAPI.apiKeys`: the apiKeys object containing the CUST_KEY, access
+    and refresh tokens.       
+ 
+# Example                     
+```julia                      
+api_getQuoteAsDataFrame("NET", apiKey) 
+some(1x90 DataFrame
+ Row | assetType  assetMainType  cusip      assetSubType  symbol  description ...
+     | String     String         String     String        String  String     
+ ------------------------------------------------------------------------------------------------
+   1 | EQUITY     EQUITY         18915M107                NET     Cloudflare, Inc. Class A Common
+[...]                         
+```                           
+"""
 function api_getQuoteAsDataFrame(symbol::String, apiKeys::TDAmeritradeAPI.apiKeys)::ErrorTypes.Option{DataFrame}
     httpRet = _getQuote(symbol, apiKeys);
 
     _quotesJSONToDataFrame(ErrorTypes.@?(httpRet))
 end
 
+"""
+```julia
+api_getQuotesAsDataFrame(symbols::Vector{String}, apiKeys::TDAmeritradeAPI.apiKeys)ErrorTypes.Result{String, String}
+```
+
+Make the TDAmeritradeAPI call to the get\\_quotes endpoint, and return a DataFrame
+
+An ErrorTypes.jl Option object will be returned that can be evaluated with ErrorTypes.@?
+
+# Arguments
+- `symbols::Vector{String}`: A Vector of ticker symbols to fetch a quotes for
+- `apiKeys::TDAmeritradeAPI.apiKeys`: the apiKeys object containing the CUST_KEY, access
+    and refresh tokens.
+
+# Example
+```julia
+api_getQuotesAsJSON(["NET", "PANW", "ZS"], apiKey)
+some(3x90 DataFrame
+ Row | assetType  assetMainType  cusip      assetSubType  symbol  description ...
+     | String     String         String     String        String  String      
+ -------------------------------------------------------------------------------------------------
+   1 | EQUITY     EQUITY         18915M107                NET     Cloudflare, Inc. Class A Common 
+   2 | EQUITY     EQUITY         697435105                PANW    Palo Alto Networks, Inc. - Commo
+   3 | EQUITY     EQUITY         98980G102                ZS      Zscaler, Inc. - Common Stock
+[...]
+```
+"""
 function api_getQuotesAsDataFrame(symbols::Vector{String}, apiKeys::TDAmeritradeAPI.apiKeys)::ErrorTypes.Option{DataFrame}
     api_getQuotesAsDataFrame(join(symbols, ","), apiKeys);
 end
 
+"""
+```julia
+api_getQuotesAsDataFrame(symbols::String, apiKeys::TDAmeritradeAPI.apiKeys)ErrorTypes.Result{String, String}
+```
+
+Make the TDAmeritradeAPI call to the get\\_quotes endpoint, and return a DataFrame
+
+An ErrorTypes.jl Option object will be returned that can be evaluated with ErrorTypes.@?
+
+# Arguments
+- `symbols::String`: A comma separated string of ticker symbols to fetch a quotes for
+- `apiKeys::TDAmeritradeAPI.apiKeys`: the apiKeys object containing the CUST_KEY, access
+    and refresh tokens.
+
+# Example
+```julia
+api_getQuotesAsJSON("NET,PANW,ZS", apiKey)
+some(3x90 DataFrame
+ Row | assetType  assetMainType  cusip      assetSubType  symbol  description ...
+     | String     String         String     String        String  String      
+ -------------------------------------------------------------------------------------------------
+   1 | EQUITY     EQUITY         18915M107                NET     Cloudflare, Inc. Class A Common 
+   2 | EQUITY     EQUITY         697435105                PANW    Palo Alto Networks, Inc. - Commo
+   3 | EQUITY     EQUITY         98980G102                ZS      Zscaler, Inc. - Common Stock
+[...]
+```
+"""
 function api_getQuotesAsDataFrame(symbols::String, apiKeys::TDAmeritradeAPI.apiKeys)::ErrorTypes.Option{DataFrame}
     httpRet = _getQuotes(symbols, apiKeys);
 
@@ -213,6 +359,26 @@ end
 ##  Convert JSON to Struct
 ##
 ###############################################################################
+"""                                                                                                                                                                                                                
+```julia
+quotesToQuoteStruct(json_string::String)::ErrorTypes.Option{QuoteArray}
+```    
+   
+Convert the JSON string returned by a TDAmeritradeAPI get\\_quote(s) API calls to a QuoteArray struct.
+       
+This is largely an internal function to allow later conversions to DataFrame with proper type conversions.
+       
+An ErrorTypes.jl Option object will be returned that can be evaluated with ErrorTypes.@?
+       
+# Example 
+```julia 
+quotesToQuoteStruct(j)
+some(TDAmeritradeAPI.QuoteStruct[TDAmeritradeAPI.QuoteStruct("EQUITY", "EQUITY", "18915M107", "", "NET", "Cloudflare, Inc. Class A Common Stock", ...
+TDAmeritradeAPI.QuoteStruct("EQUITY", "EQUITY", "697435105", "", "PANW", "Palo Alto Networks, Inc. - Common Stock", ...
+TDAmeritradeAPI.QuoteStruct("EQUITY", "EQUITY", "98980G102", "", "ZS", "Zscaler, Inc. - Common Stock", ...
+[...]  
+```  
+"""
 function quotesToQuoteStruct(json_string::String)::ErrorTypes.Option{QuoteArray}
     j3 = JSON3.read(json_string)
 
@@ -229,10 +395,58 @@ end
 ##  Convert Struct to JSON
 ##
 ###############################################################################
+"""
+```julia
+quotesToJSON(q::QuoteArray)::ErrorTypes.Option{String}
+```
+  
+Convert a QuoteArray struct q to a JSON object.
+  
+An ErrorTypes.jl Option object will be returned that can be evaluated with ErrorTypes.@?
+  
+The returned JSON will not be in the same format as the initial return from the TDAmeritradeAPI call.
+  
+# Example
+```julia
+quotesToJSON(s)
+some("[{\"assetType\":\"EQUITY\",\"assetMainType\":\"EQUITY\",\"cusip\":\"18915M107\",\"assetSubType\":\"\",\"symbol\":\"NET\",\"description\":\"Cloudflare, Inc. Class A Common Stock\"
+[...]
+```
+"""
 function quotesToJSON(q::QuoteArray)::ErrorTypes.Option{String}
     some(JSON3.write(q))
 end
 
+
+################################################################################
+##
+##  Quotes JSON to DataFrame format conversion functions
+##
+################################################################################
+"""
+```julia
+parseQuotesJSONToDataFrame(json_string::String)::ErrorTypes.Option{DataFrame}
+```
+
+Convert the JSON string returned by a TDAmeritradeAPI get\\_quote(s) API call to a DataFrame.
+
+Nested JSON objects will be flattened into columns in the output DataFrame.
+
+An ErrorTypes.jl Option object will be returned that can be evaluated with ErrorTypes.@?
+
+# Example
+```julia
+parseQuotesJSONToDataFrame(j)
+some(3x90 DataFrame
+ Row | assetType  assetMainType  cusip      assetSubType  symbol  description ...
+     | String     String         String     String        String  String      
+ -------------------------------------------------------------------------------------------------
+   1 | EQUITY     EQUITY         18915M107                NET     Cloudflare, Inc. Class A Common 
+   2 | EQUITY     EQUITY         697435105                PANW    Palo Alto Networks, Inc. - Commo
+   3 | EQUITY     EQUITY         98980G102                ZS      Zscaler, Inc. - Common Stock
+[...]
+```
+"""
 function parseQuotesJSONToDataFrame(json_string::String)::ErrorTypes.Option{DataFrame}
      _quotesJSONToDataFrame(json_string)
 end

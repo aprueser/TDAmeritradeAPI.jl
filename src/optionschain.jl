@@ -213,7 +213,7 @@ function _getOptionChain(symbol::String, apiKeys::TDAmeritradeAPI.apiKeys;
         @argcheck uppercase(expMonth) in validExpMonth
         @argcheck uppercase(optionType) in validOptionType 
 
-    bodyParams = Dict{String, Union{Float64, String, Bool}}("symbol"          => symbol,
+    bodyParams = Dict{String, Union{Number, String, Bool}}("symbol"          => symbol,
                                                            "contractType"     => contractType,
                                                            "strikeCount"      => strikeCount,
                                                            "includeQuotes"    => includeQuotes,
